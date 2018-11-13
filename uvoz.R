@@ -168,11 +168,29 @@ rep_1day <- pretvori_5min(rep_5min, 86400, (60*24))
 save(rep_1day, file = "rep_1day.Rda")
 
 
-# #graf
+#graf
 # library(ggplot2)
-# btc_1day$barva <- ifelse(btc_1day$open <= btc_1day$close, "green", "red")
-# btc_1day$barva <- factor(btc_1day$barva, levels= c("red", "green"))
-# ggplot(btc_1day, aes(date, fill=barva, colour=barva))+ 
-#   geom_boxplot(aes(ymin = low, lower = ifelse(open < close, open, close), middle = (open+close)/2, 
-#                    upper = ifelse(open<close, close, open), ymax = high), stat = "identity")
+# btc_1day$barva <- ifelse(btc_1day$Open <= btc_1day$Close, "blue", "red")
+# btc_1day$barva <- factor(btc_1day$barva, levels= c("red", "blue"))
+# ggplot(btc_1day[1:360,], aes(Timestamp, fill=barva, colour=barva))+
+#   geom_boxplot(aes(ymin = Low, lower = ifelse(Open < Close, Open, Close), middle = (Open+Close)/2,
+#                    upper = ifelse(Open<Close, Close, Open), ymax = High), stat = "identity")+
+#   theme_minimal()
 
+ggplot(btc_1day, aes(Timestamp))+
+  geom_line(aes(x = Timestamp, y = Close))+
+  theme_minimal()+
+  ylab("Zaključna cena dneva")+
+  xlab("Trgovalni dnevi")+
+  ggtitle("Cena Kriptovalute Bitcoin")
+
+
+
+###################
+# S & P 500 index #
+###################
+spx <- read.csv("podatki/^GSPC.csv", header = T, sep = ",")
+
+# pretvorba za delo s strategijo Turtle
+spx_1day <- spx[1:which(spx$Date == "2018-06-27"),]
+spx_1day$Date <- anytime(spx_1day$Date)
