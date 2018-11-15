@@ -35,25 +35,27 @@ unit <- function(account_size, N){
 #vstopne točke: 1=go long, 2=go short
 #System 1
 #vstop_s1 = toliko dnevni višek ali toliko dnevno dno (default = 20)
-spr_entry_s1 <- function(tabela, vstop_s1){
+spr_entry_s1 <- function(tabela, vstop_s1, cena){
   entry <- rep(0, nrow(tabela))
   for(i in (vstop_s1+1):nrow(tabela)){
-    if(tabela$Close[i] > max(tabela$Close[(i-vstop_s1):(i-1)])){entry[i] <- 1}
-    if(tabela$Close[i] < min(tabela$Close[(i-vstop_s1):(i-1)])){entry[i] <- 2}
+    if(cena[i,] > max(cena[(i-vstop_s1):(i-1),])){entry[i] <- 1}
+    if(cena[i,] < min(cena[(i-vstop_s1):(i-1),])){entry[i] <- 2}
   }
   entry
 }
 
+
 #System 2
 #vstop_s2 = toliko dnevni višek ali toliko dnevno dno (default = 55)
-spr_entry_s2 <- function(tabela, vstop_s2){
+spr_entry_s2 <- function(tabela, vstop_s2, cena){
   entry <- rep(0, nrow(tabela))
   for(i in (vstop_s2+1):nrow(tabela)){
-    if(tabela$Close[i] > max(tabela$Close[(i-vstop_s2):(i-1)])){entry[i] <- 1}
-    if(tabela$Close[i] < min(tabela$Close[(i-vstop_s2):(i-1)])){entry[i] <- 2}
+    if(cena[i,] > max(cena[(i-vstop_s2):(i-1),])){entry[i] <- 1}
+    if(cena[i,] < min(cena[(i-vstop_s2):(i-1),])){entry[i] <- 2}
   }
   entry
 }
+
 
 #N so dobili izračunan na začetku tedna
 spr_tedenski_N <- function(tabela){
@@ -71,36 +73,37 @@ spr_tedenski_N <- function(tabela){
 
 #default = iz zmagovite long pozicije izstopimo ko pridemo do 10 dnevnega dna, iz short 10 dnevni vrh
 #izstop_s1 = toliko dnevno dno oz. toliko dnevni vrh
-spr_win_izstop_s1 <- function(tabela, entry, short_long, izstop_s1){
+spr_win_izstop_s1 <- function(tabela, entry, short_long, izstop_s1, cena){
   if(short_long == "long"){
     izstop <- rep(0, nrow(tabela))
     for(i in (izstop_s1+1):nrow(tabela)){
-      if(tabela$Close[i] < min(tabela$Close[(i-izstop_s1):(i-1)])){izstop[i] <- 1}
+      if(cena[i,] < min(cena[(i-izstop_s1):(i-1),])){izstop[i] <- 1}
     }
     which(izstop==1)[which(izstop==1)>entry][1]
   }
   else{
     izstop <- rep(0, nrow(tabela))
     for(i in (izstop_s1+1):nrow(tabela)){
-      if(tabela$Close[i] > max(tabela$Close[(i-izstop_s1):(i-1)])){izstop[i] <- 1}
+      if(cena[i,] > max(cena[(i-izstop_s1):(i-1),])){izstop[i] <- 1}
     }
     which(izstop==1)[which(izstop==1)>entry][1]
   }
 }
 
-spr_turtle_s1 <- function(tabela, zacetni_kapital, izstop_s1){
+
+spr_turtle_s1 <- function(tabela, zacetni_kapital, izstop_s1, cena){
   kandidati_s1 <- which(tabela$entry_s1==1 | tabela$entry_s1==2)
   kandidati_s2 <- which(tabela$entry_s2==1 | tabela$entry_s2==2)
   vstop <- kandidati_s1[1]
   profit <- 0
   money <- zacetni_kapital
   while(nrow(tabela) - vstop > 0){
-    cena_vstop <- tabela$Close[vstop]
+    cena_vstop <- cena[vstop,]
     st_btc <- unit(money, tabela$spr_tedenski_N[vstop])/cena_vstop
     
     if(tabela$entry_s1[vstop]==1 | tabela$entry_s2[vstop]==1){
-      izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "long", izstop_s1)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "long", izstop_s1))
-      cena_izstop <- tabela$Close[izstop]
+      izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "long", izstop_s1, cena)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "long", izstop_s1, cena))
+      cena_izstop <- cena[izstop,]
       st_enot <- 1
       stop_loss <- cena_vstop - 2*tabela$spr_tedenski_N[vstop]
       pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
@@ -109,38 +112,38 @@ spr_turtle_s1 <- function(tabela, zacetni_kapital, izstop_s1){
       st_btc_dodamo <- st_btc
       for(i in (vstop+1):(izstop-1)){
         vstop <- i
-        if((tabela$Close[i] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
-          razlika <- tabela$Close[i] - cena_ko_dodamo[length(cena_ko_dodamo)]
+        if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
+          razlika <- cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)]
           dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
           if(st_enot + dodamo <= 4){
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss + pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
           else{
             dodamo <- ifelse(st_enot==2, 2, 1)
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss + pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
         }
         else{
-          if(tabela$Close[i] <= stop_loss){
+          if(cena[i,] <= stop_loss){
             vstop <- ifelse(is.na(kandidati_s1[kandidati_s1 > vstop][1]), nrow(tabela), kandidati_s1[kandidati_s1 > vstop][1])
             for(j in 1:length(st_btc_dodamo)){
-              profit <- profit + (tabela$Close[i] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+              profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
             }
             break}
         }
       }
     }
     else{
-      izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "short", izstop_s1)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "short", izstop_s1))
-      cena_izstop <- tabela$Close[izstop]
+      izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "short", izstop_s1, cena)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "short", izstop_s1, cena))
+      cena_izstop <- cena[izstop,]
       st_enot <- 1
       stop_loss <- cena_vstop + 2*tabela$spr_tedenski_N[vstop]
       pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
@@ -149,30 +152,30 @@ spr_turtle_s1 <- function(tabela, zacetni_kapital, izstop_s1){
       st_btc_dodamo <- st_btc
       for(i in (vstop+1):(izstop-1)){
         vstop <- i
-        if((tabela$Close[i] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
-          razlika <- abs(tabela$Close[i] - cena_ko_dodamo[length(cena_ko_dodamo)])
+        if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
+          razlika <- abs(cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)])
           dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
           if(st_enot + dodamo <= 4){
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss - pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
           else{
             dodamo <- ifelse(st_enot==2, 2, 1)
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss - pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
         }
         else{
-          if(tabela$Close[i] >= stop_loss){
+          if(cena[i,] >= stop_loss){
             vstop <- ifelse(is.na(kandidati_s1[kandidati_s1 > vstop][1]), nrow(tabela), kandidati_s1[kandidati_s1 > vstop][1])
-            for(i in 1:length(st_btc_dodamo)){
-              profit <- profit + (cena_ko_dodamo[j] - tabela$Close[i])*st_btc_dodamo[j]
+            for(j in 1:length(st_btc_dodamo)){
+              profit <- profit + (cena_ko_dodamo[j] - cena[i,])*st_btc_dodamo[j]
             }
             break}
         }
@@ -197,36 +200,36 @@ spr_turtle_s1 <- function(tabela, zacetni_kapital, izstop_s1){
 
 #default = iz zmagovite long pozicije izstopimo ko pridemo do 20 dnevnega dna, iz short 20 dnevni vrh
 #izstop_s2 = toliko dnevno dno oz. toliko dnevni vrh
-spr_win_izstop_s2 <- function(tabela, entry, short_long, izstop_s2){
+spr_win_izstop_s2 <- function(tabela, entry, short_long, izstop_s2, cena){
   if(short_long == "long"){
     izstop <- rep(0, nrow(tabela))
     for(i in (izstop_s2+1):nrow(tabela)){
-      if(tabela$Close[i] < min(tabela$Close[(i-izstop_s2):(i-1)])){izstop[i] <- 1}
+      if(cena[i,] < min(cena[(i-izstop_s2):(i-1),])){izstop[i] <- 1}
     }
     which(izstop==1)[which(izstop==1)>entry][1]
   }
   else{
     izstop <- rep(0, nrow(tabela))
     for(i in (izstop_s2+1):nrow(tabela)){
-      if(tabela$Close[i] > max(tabela$Close[(i-izstop_s2):(i-1)])){izstop[i] <- 1}
+      if(cena[i,] > max(cena[(i-izstop_s2):(i-1),])){izstop[i] <- 1}
     }
     which(izstop==1)[which(izstop==1)>entry][1]
   }
 }
 
 
-spr_turtle_s2 <- function(tabela, zacetni_kapital, izstop_s2){
+spr_turtle_s2 <- function(tabela, zacetni_kapital, izstop_s2, cena){
   kandidati <- which(tabela$entry_s2==1 | tabela$entry_s2==2)
   vstop <- kandidati[1]
   profit <- 0
   money <- zacetni_kapital
   while(nrow(tabela) - vstop > 0){
-    cena_vstop <- tabela$Close[vstop]
+    cena_vstop <- cena[vstop,]
     st_btc <- unit(money, tabela$spr_tedenski_N[vstop])/cena_vstop
     
     if(tabela$entry_s2[vstop]==1){
-      izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "long", izstop_s2)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "long", izstop_s2))
-      cena_izstop <- tabela$Close[izstop]
+      izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "long", izstop_s2, cena)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "long", izstop_s2, cena))
+      cena_izstop <- cena[izstop,]
       st_enot <- 1
       stop_loss <- cena_vstop - 2*tabela$spr_tedenski_N[vstop]
       pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
@@ -235,38 +238,38 @@ spr_turtle_s2 <- function(tabela, zacetni_kapital, izstop_s2){
       st_btc_dodamo <- st_btc
       for(i in (vstop+1):(izstop-1)){
         vstop <- i
-        if((tabela$Close[i] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
-          razlika <- tabela$Close[i] - cena_ko_dodamo[length(cena_ko_dodamo)]
+        if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
+          razlika <- cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)]
           dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
           if(st_enot + dodamo <= 4){
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss + pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
           else{
             dodamo <- ifelse(st_enot==2, 2, 1)
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss + pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
         }
         else{
-          if(tabela$Close[i] <= stop_loss){
+          if(cena[i,] <= stop_loss){
             vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
             for(j in 1:length(st_btc_dodamo)){
-              profit <- profit + (tabela$Close[i] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+              profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
             }
             break}
         }
       }
     }
     else{
-      izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "short", izstop_s2)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "short", izstop_s2))
-      cena_izstop <- tabela$Close[izstop]
+      izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "short", izstop_s2, cena)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "short", izstop_s2, cena))
+      cena_izstop <- cena[izstop,]
       st_enot <- 1
       stop_loss <- cena_vstop + 2*tabela$spr_tedenski_N[vstop]
       pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
@@ -275,30 +278,30 @@ spr_turtle_s2 <- function(tabela, zacetni_kapital, izstop_s2){
       st_btc_dodamo <- st_btc
       for(i in (vstop+1):(izstop-1)){
         vstop <- i
-        if((tabela$Close[i] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
-          razlika <- abs(tabela$Close[i] - cena_ko_dodamo[length(cena_ko_dodamo)])
+        if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
+          razlika <- abs(cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)])
           dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
           if(st_enot + dodamo <= 4){
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss - pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
           else{
             dodamo <- ifelse(st_enot==2, 2, 1)
             st_enot <- st_enot + dodamo
-            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/tabela$Close[i])*dodamo)
+            st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
             stop_loss <- stop_loss - pol_N*dodamo
             kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-            cena_ko_dodamo <- c(cena_ko_dodamo, tabela$Close[i])
+            cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
           }
         }
         else{
-          if(tabela$Close[i] >= stop_loss){
+          if(cena[i,] >= stop_loss){
             vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
             for(j in 1:length(st_btc_dodamo)){
-              profit <- profit + (cena_ko_dodamo[j] - tabela$Close[i])*st_btc_dodamo[j]
+              profit <- profit + (cena_ko_dodamo[j] - cena[i,])*st_btc_dodamo[j]
             }
             break}
         }
@@ -321,15 +324,25 @@ spr_turtle_s2 <- function(tabela, zacetni_kapital, izstop_s2){
 ###########
 
 
-izracun_za_analizo <- function(tabela, dnevi_N, vstop_s1, vstop_s2){
+izracun_za_analizo <- function(tabela, dnevi_N, vstop_s1, vstop_s2, cena){
   tabela <- tabela[-nrow(tabela),]
   tab <- spr_N(tabela, dnevi_N)
-  tab$entry_s1 <- spr_entry_s1(tab, vstop_s1)
-  tab$entry_s2 <- spr_entry_s2(tab, vstop_s2)
+  cena1 <- odlocitev_cena(tab, cena)
+  tab$entry_s1 <- spr_entry_s1(tab, vstop_s1, cena1)
+  tab$entry_s2 <- spr_entry_s2(tab, vstop_s2, cena1)
   tab$spr_tedenski_N <- spr_tedenski_N(tab)
   tab <- tab[tab$spr_tedenski_N > 0,]
   tab
 }
+
+odlocitev_cena <- function(tabela, cena){
+  if(cena == "Close"){cena1 <- data.frame(tabela$Close)}
+  if(cena == "Low"){cena1 <- data.frame(tabela$Low)}
+  if(cena == "High"){cena1 <- data.frame(tabela$High)}
+  if(cena == "Open"){cena1 <- data.frame(tabela$Open)}
+  cena1
+}
+
 
 # Spremenljivke:
 #   - dnevi_N: 10, 15, D = 20, 25, 30
@@ -339,17 +352,26 @@ izracun_za_analizo <- function(tabela, dnevi_N, vstop_s1, vstop_s2){
 #   - izstop_s2: 16, 18, D = 20, 22, 24
 #   - obdobje: koliko časa trgujemo to strategijo (če imamo tabelo z dnevnimi cenami, 360 pomeni 360 dni), D = 1800
 #   - strategija: S1 = System 1, S2 = System 2
-spr_dobicki <- function(dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55, izstop_s1 = 10, izstop_s2 = 20, obdobje = 1800, zacetni_kapital = 1000000, strategija){
-  tab <- izracun_za_analizo(btc_1day, dnevi_N, vstop_s1, vstop_s2)
+#   - cena: Open, Low, D = Close, High
+#   - dodajanje enot: 1/4N, 1/2N, 3/4N, N
+#   - stop-loss: N, 2N, 3N, 4N
+#   - začetni kapital: 50.000 do 1.000.000 s korakom 50.000
+spr_dobicki <- function(dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55, izstop_s1 = 10, izstop_s2 = 20, 
+                        obdobje = 1800, zacetni_kapital = 1000000, cena = "Close", strategija){
+  tab <- izracun_za_analizo(btc_1day, dnevi_N, vstop_s1, vstop_s2, cena)
   dobicki <- c()
   if(strategija == "S1"){
     for(i in 1:(nrow(tab) - obdobje + 1)){
-      dobicki <- c(dobicki, spr_turtle_s1(tab[i:(obdobje + i - 1),], zacetni_kapital, izstop_s1))
+      tmp <- tab[i:(obdobje + i - 1),]
+      cena2 <- odlocitev_cena(tmp, cena)
+      dobicki <- c(dobicki, spr_turtle_s1(tmp, zacetni_kapital, izstop_s1, cena2))
     }
   }
   else{
     for(i in 1:(nrow(tab) - obdobje + 1)){
-      dobicki <- c(dobicki, spr_turtle_s2(tab[i:(obdobje + i - 1),], zacetni_kapital, izstop_s2))
+      tmp <- tab[i:(obdobje + i - 1),]
+      cena2 <- odlocitev_cena(tmp, cena)
+      dobicki <- c(dobicki, spr_turtle_s2(tmp, zacetni_kapital, izstop_s2, cena2))
     }
   }
   c(mean(dobicki), sd(dobicki))
@@ -357,7 +379,6 @@ spr_dobicki <- function(dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55, izstop_s1 = 
 
 # Matrika, ki prikazuje povprečne dobičke ali varianco glede na različne vstope in izstope iz pozicij
 dobicki_vstop_izstop <- function(strategija){
-  # kodo zoptimiziraj tako, da vrne obe tabeli hkrati z stolpcem umes praznim (da ne rabi dvakrat istega računat)
   M <- matrix(0, 5, 5)
   N <- matrix(0, 5, 5)
   if(strategija == "S1"){
@@ -403,7 +424,7 @@ colnames(S2sd_dob_vstop_izstop) <- seq(16, 24, 2)
 
 
 # matrika, ki prikazuje povprečne dobičke in varianco glede na različne poračune N-ja ali 
-#glede na različan začetni kapital 
+#glede na različen začetni kapital 
 dobicki_spr_N_zk <- function(strategija, N_ali_zk){
   M1 <- matrix(0, 2, 5)
   M2 <- matrix(0, 2, 20)
@@ -430,11 +451,59 @@ dobicki_spr_N_zk <- function(strategija, N_ali_zk){
   matrika
 }
 
+# spremenljivka N
 S1dobicki_N <- dobicki_spr_N_zk("S1", "N")
 S2dobicki_N <- dobicki_spr_N_zk("S2", "N")
 
+dodan_kolicnik <- function(tabela){
+  kolicnik <- c()
+  for(i in 1:ncol(tabela)){
+    kolicnik <- c(kolicnik, round(tabela[1, i]/tabela[2, i], 1))
+  }
+  rbind(tabela, "kolicnik" = kolicnik)
+}
+
+S1dobicki_N_2 <- dodan_kolicnik(S1dobicki_N)
+S2dobicki_N_2 <- dodan_kolicnik(S2dobicki_N)
+
+
+# zacetni kapital
 S1dobicki_zk <- dobicki_spr_N_zk("S1", "zk")
 S2dobicki_zk <- dobicki_spr_N_zk("S2", "zk")
+
+dodano_povecanje <- function(tabela){
+  povecanje <- c(0)
+  kolicnik <- c(round(tabela[1, 1]/tabela[2, 1], 1))
+  for(i in 2:ncol(tabela)){
+    povecanje <- c(povecanje, round(((tabela[1, i]/tabela[1, (i-1)])-1)*100, 2))
+    kolicnik <- c(kolicnik, round(tabela[1, i]/tabela[2, i], 1))
+  }
+  rbind(tabela, "odstotki" = povecanje, "kolcnik" = kolicnik)
+}
+
+S1dobicki_zk_2 <- dodano_povecanje(S1dobicki_zk)
+S2dobicki_zk_2 <- dodano_povecanje(S2dobicki_zk)
+
+
+# Close, Open, Low, High cena
+dobicki_cena <- function(strategija){
+  M <- matrix(0, 2, 4)
+  zap_cena <- c("Open", "Low", "High", "Close")
+  for(j in 1:4){
+    tmp <- spr_dobicki(cena = zap_cena[j], strategija = strategija)
+    M[1, j] <- tmp[1]
+    M[2, j] <- tmp[2]
+  }
+  matrika <- data.frame(M, row.names = c("povprecje", "sd"))
+  colnames(matrika) <- zap_cena
+  matrika
+}
+
+S1dobicki_cena <- dobicki_cena("S1")
+S2dobicki_cena <- dobicki_cena("S2")
+
+S1dobicki_cena_2 <- dodan_kolicnik(S1dobicki_cena)
+S2dobicki_cena_2 <- dodan_kolicnik(S2dobicki_cena)
 
 #################################
 # Compaunded annual growth rate #
@@ -453,7 +522,8 @@ cagr <- function(tabela, zacetni_kapital = 1000000, obdobje = 1800){
 
 spr <- function(tabela, name){
   ifelse(name == "vi", tmp <- cbind("vstop/izstop" = rownames(tabela), tabela), 
-         ifelse(name == "N", tmp <- cbind("N" = rownames(tabela), tabela), tmp <- cbind("zk" = rownames(tabela), tabela)))
+         ifelse(name == "N", tmp <- cbind("N" = rownames(tabela), tabela), 
+                ifelse(name == "cena", tmp <- cbind("cena" = rownames(tabela), tabela), tmp <- cbind("zk" = rownames(tabela), tabela))))
   tmp
 }
 
@@ -468,7 +538,7 @@ flextabela_matrika <- function(tabela, cagr){
   tabela <- bold(tabela, part = "header")
   tabela <- bold(tabela, j = 1, part = "body")
   tabela <- align(tabela, align = "center", part = "all")
-  if(cagr == "nc"){tabela <- set_formatter_type(tabela, fmt_double = "%.00f")}
+  if(cagr == "nc"){tabela <- set_formatter_type(tabela, fmt_double = "%.01f")}
   else{tabela <- set_formatter_type(tabela, fmt_double = "%.02f")}
   tabela <- bg(tabela, bg = "coral", j = 1)
   tabela <- border_remove(tabela)
@@ -488,9 +558,72 @@ flextabela_matrika(spr(S2sd_dob_vstop_izstop, "vi"),"nc")
 
 flextabela_matrika(spr(cagr(S1povprecje_dob_vstop_izstop), "vi"), "cagr")
 flextabela_matrika(spr(cagr(S2povprecje_dob_vstop_izstop), "vi"), "cagr")
+flextabela_matrika(spr(S1povprecje_dob_vstop_izstop/S1sd_dob_vstop_izstop, "vi"), "cagr")
+flextabela_matrika(spr(S2povprecje_dob_vstop_izstop/S2sd_dob_vstop_izstop, "vi"), "cagr")
 
-flextabela_matrika(spr(S1dobicki_N, "N"), "nc")
-flextabela_matrika(spr(S2dobicki_N, "N"), "nc")
 
-flextabela_matrika(spr(S1dobicki_zk, "zk"), "nc")
-flextabela_matrika(spr(S2dobicki_zk, "zk"), "nc")
+flextabela_matrika(spr(S1dobicki_N_2, "N"), "nc")
+flextabela_matrika(spr(S2dobicki_N_2, "N"), "nc")
+
+flextabela_matrika(spr(S1dobicki_zk_2, "zk"), "nc")
+flextabela_matrika(spr(S2dobicki_zk_2, "zk"), "nc")
+
+flextabela_matrika(spr(S1dobicki_cena_2, "cena"), "nc")
+flextabela_matrika(spr(S2dobicki_cena_2, "cena"), "nc")
+
+#######################################
+# Najboljši parametri - nova stragija #
+#######################################
+
+
+novi_dobicki <- function(dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55, izstop_s1 = 10, izstop_s2 = 20, 
+                        obdobje = 1800, zacetni_kapital = 1000000, cena = "Close", strategija){
+  tab <- izracun_za_analizo(btc_1day, dnevi_N, vstop_s1, vstop_s2, cena)
+  dobicki <- c()
+  if(strategija == "S1"){
+    for(i in 1:(nrow(tab) - obdobje + 1)){
+      tmp <- tab[i:(obdobje + i - 1),]
+      cena2 <- odlocitev_cena(tmp, cena)
+      dobicki <- c(dobicki, spr_turtle_s1(tmp, zacetni_kapital, izstop_s1, cena2))
+    }
+  }
+  else{
+    for(i in 1:(nrow(tab) - obdobje + 1)){
+      tmp <- tab[i:(obdobje + i - 1),]
+      cena2 <- odlocitev_cena(tmp, cena)
+      dobicki <- c(dobicki, spr_turtle_s2(tmp, zacetni_kapital, izstop_s2, cena2))
+    }
+  }
+  dobicki
+}
+
+novi_btc_dobicki_360_S1 <- novi_dobicki(obdobje = 360, "S1")/1000
+novi_btc_dobicki_500_S1 <- novi_dobicki(obdobje = 500, "S1")/1000
+novi_btc_dobicki_1000_S1 <- novi_dobicki(obdobje = 1000, "S1")/1000
+novi_btc_dobicki_1800_S1 <- novi_dobicki("S1")/1000
+
+novi_btc_dobicki_360_S2 <- novi_dobicki(obdobje = 360, "S1")/1000
+novi_btc_dobicki_500_S2 <- novi_dobicki(obdobje = 500, "S1")/1000
+novi_btc_dobicki_1000_S2 <- novi_dobicki(obdobje = 1000, "S1")/1000
+novi_btc_dobicki_1800_S2 <- novi_dobicki("S1")/1000
+
+novi_pregled_btc_S1 <- pregled_dobicki(novi_btc_dobicki_360_S1, novi_btc_dobicki_500_S1, novi_btc_dobicki_1000_S1, 
+                                       novi_btc_dobicki_1800_S1, 1000000, "S1")
+novi_pregled_btc_S2 <- pregled_dobicki(novi_btc_dobicki_360_S2, novi_btc_dobicki_500_S2, novi_btc_dobicki_1000_S2, 
+                                       novi_btc_dobicki_1800_S2, 1000000, "S2")
+
+flextabela_pregled(novi_pregled_btc_S1, 0)
+flextabela_pregled(novi_pregled_btc_S2, 0)
+
+flextabela_pregled(pregled_cagr(novi_pregled_btc_S1, strategija = "S1"), 3)
+flextabela_pregled(pregled_cagr(novi_pregled_btc_S2, strategija = "S2"), 3)
+
+
+novi_pred_po_2014 <- pred_po_2014(novi_btc_dobicki_360_S1, novi_btc_dobicki_500_S1, 
+                                  novi_btc_dobicki_1000_S1, novi_btc_dobicki_1800_S1)
+flextabela_pregled(novi_pred_po_2014, 0)
+
+
+novi_sd_pred_po_2014 <- sd_pred_po_2014(novi_btc_dobicki_360_S1, novi_btc_dobicki_500_S1, 
+                                        novi_btc_dobicki_1000_S1, novi_btc_dobicki_1800_S1)
+flextabela_pregled(novi_sd_pred_po_2014, 0)

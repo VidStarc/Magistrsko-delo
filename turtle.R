@@ -504,7 +504,7 @@ g_dobicki <- function(vrednosti, st_bin, obdobje){
     geom_histogram(aes(vrednosti), bins = st_bin)+
     theme_minimal()+
     ggtitle(paste0(obdobje, " dnevno trgovanje" ))+
-    xlab("Dobičkek v 1000")+
+    xlab("Dobiček v 1000")+
     ylab("Število")+
     theme(plot.title = element_text(hjust = 0.5))
 }
@@ -579,10 +579,11 @@ dobicki_v_casu <- function(tabela, obdobje, prikaz = 1){
   ggplot(data.frame(tabela))+
     geom_point(aes(x = (1:length(tabela)), y = tabela), fill="blue", color="blue", shape = 20, size = 0.01)+
     theme_minimal()+
-    ggtitle(paste0("Dobički skozi čas pri trgovanju", obdobje, "enot"))+
+    ggtitle(paste0("Dobički skozi čas", ", ",obdobje, " dnevno trgovanje" ))+
     ylab("Dobički v 1000")+
     xlab(paste0("Čas (začetek = ", cas, ")"))+
-    ylim(c(min(0, min(tabela)), max(tabela)))
+    ylim(c(min(0, min(tabela)), max(tabela)))+
+    theme(plot.title = element_text(hjust = 0.9))
 }
 
 grid.arrange(dobicki_v_casu(btc_dobicki_360_S1, 360), dobicki_v_casu(btc_dobicki_500_S1, 500), 
@@ -647,7 +648,9 @@ flextabela_pregled <- function(tabela, st_decimalk){
   tabela <- bold(tabela, part = "header")
   #tabela <- color(tabela, color = "white", part = "header")
   tabela <- align(tabela, align = "center", part = "all")
-  ifelse(st_decimalk == 0, tabela <- set_formatter_type(tabela, fmt_double = "%.00f"), tabela <- set_formatter_type(tabela, fmt_double = "%.03f"))
+  ifelse(st_decimalk == 0, tabela <- set_formatter_type(tabela, fmt_double = "%.00f"), 
+         ifelse(st_decimalk == 1, tabela <- set_formatter_type(tabela, fmt_double = "%.01f"), 
+                tabela <- set_formatter_type(tabela, fmt_double = "%.03f")))
   #tabela <- color(tabela, ~ povprecje > 3.5, ~ povprecje, color = "red")
   #tabela <- bold(tabela, ~ povprecje > 3.5, ~ povprecje, bold = TRUE)
   tabela
@@ -686,3 +689,45 @@ flextabela_pregled(pregled_cagr(pregled_btc_S1, strategija = "S1"), 3)
 flextabela_pregled(pregled_cagr(pregled_btc_S2, strategija = "S2"), 3)
 flextabela_pregled(pregled_cagr(pregled_btc_S1_2, zacetni_kapital = 50000, "S1"), 3)
 flextabela_pregled(pregled_cagr(pregled_btc_S2_2, zacetni_kapital = 50000, "S2"), 3)
+
+#######################
+# pred in po letu 2014#
+#######################
+
+pred_po_2014 <- function(l1, l2, l3, l4){
+  pred_2014 <- c(mean(l1[1:700]*1000), mean(l2[1:700]*1000), mean(l3[1:700]*1000), mean(l4*1000))
+  cagr_pred_2014 <- c(cagr(pred_2014[1], obdobje = 360), cagr(pred_2014[2], obdobje = 500), 
+                    cagr(pred_2014[3], obdobje = 1000), cagr(pred_2014[4]))
+  po_2014 <- c(mean(l1[701:length(l1)]*1000), mean(l2[701:length(l2)]*1000), mean(l3[701:length(l3)]*1000), 0)
+  cagr_po_2014 <- c(cagr(po_2014[1], obdobje = 360), cagr(po_2014[2], obdobje = 500), 
+                    cagr(po_2014[3], obdobje = 1000), cagr(po_2014[4]))
+  data.frame("sistem_obdobje" = c("S1, 360", "S1, 500", "S1, 1000", "S1, 1800"), 
+             "pred_2014" = pred_2014, "po_2014" = po_2014, 
+             "lsd_pred_2014" = paste0(cagr_pred_2014, " %"), 
+             "lsd_po_2014" = paste0(cagr_po_2014, " %"))
+}
+
+
+S1pred_po_2014 <- pred_po_2014(btc_dobicki_360_S1, btc_dobicki_500_S1, btc_dobicki_1000_S1, btc_dobicki_1800_S1)
+
+# Flextabela
+flextabela_pregled(S1pred_po_2014, 0)
+
+sd_pred_po_2014 <- function(l1, l2, l3, l4){
+  sd_pred_2014 <- c(sd(l1[1:700]*1000), sd(l2[1:700]*1000), sd(l3[1:700]*1000), sd(l4*1000))
+  pred_2014 <- c(mean(l1[1:700]*1000), mean(l2[1:700]*1000), mean(l3[1:700]*1000), mean(l4*1000))
+  kolicnik_pred_2014 <- pred_2014/sd_pred_2014
+  sd_po_2014 <- c(sd(l1[701:length(l1)]*1000), sd(l2[701:length(l2)]*1000), sd(l3[701:length(l3)]*1000), 0)
+  po_2014 <- c(mean(l1[701:length(l1)]*1000), mean(l2[701:length(l2)]*1000), mean(l3[701:length(l3)]*1000), 0)
+  kolicnik_po_2014 <- po_2014/sd_po_2014
+  data.frame("sistem_obdobje" = c("S1, 360", "S1, 500", "S1, 1000", "S1, 1800"), 
+             "pred_2014" = sd_pred_2014, "po_2014" = sd_po_2014, 
+             "kolicnik_pred" = kolicnik_pred_2014, "kolicnik_po" = kolicnik_po_2014)
+}
+
+sd_pred_po_2014 <- sd_pred_po_2014(btc_dobicki_360_S1, btc_dobicki_500_S1, btc_dobicki_1000_S1, 
+                                   btc_dobicki_1800_S1)
+
+
+# Flextabela
+flextabela_pregled(sd_pred_po_2014, 1)
