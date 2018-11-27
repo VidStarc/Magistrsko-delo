@@ -308,26 +308,26 @@ turtle_s2 <- function(tabela, zacetni_kapital){
 #5 letni pregled dobičkov in Graf kandidatov za vstop in izstop#
 ################################################################
 
-#enote: 1 = 1 day
-#strategija: S1 = System 1, S2 = System 2
-pregled_5ih_let <- function(tabela, zacetni_kapital, enote, strategija){
-  tab <- tabela[1:(387*enote),]
-  tab <- izracun_N(tab)
-  tab$entry20 <- entry_s1(tab)
-  tab$entry55 <- entry_s2(tab)
-  tab$tedenski_N <- tedenski_N(tab)
-  ifelse(strategija == "S1", pregled <- turtle_s1(tab, zacetni_kapital), pregled <- turtle_s2(tab, zacetni_kapital))
-  for(i in 1:4){
-    tab <- tabela[((387*enote) + (i-1)*(365*enote) + i):((387*enote) + i*(365*enote) + i),]
-    tab <- izracun_N(tab)
-    tab$entry20 <- entry_s1(tab)
-    tab$entry55 <- entry_s2(tab)
-    tab$tedenski_N <- tedenski_N(tab)
-    ifelse(strategija == "S1", pregled1 <- turtle_s1(tab, zacetni_kapital), pregled1 <- turtle_s2(tab, zacetni_kapital))
-    pregled <- rbind(pregled, pregled1)
-  }
-  pregled
-}
+# #enote: 1 = 1 day
+# #strategija: S1 = System 1, S2 = System 2
+# pregled_5ih_let <- function(tabela, zacetni_kapital, enote, strategija){
+#   tab <- tabela[1:(387*enote),]
+#   tab <- izracun_N(tab)
+#   tab$entry20 <- entry_s1(tab)
+#   tab$entry55 <- entry_s2(tab)
+#   tab$tedenski_N <- tedenski_N(tab)
+#   ifelse(strategija == "S1", pregled <- turtle_s1(tab, zacetni_kapital), pregled <- turtle_s2(tab, zacetni_kapital))
+#   for(i in 1:4){
+#     tab <- tabela[((387*enote) + (i-1)*(365*enote) + i):((387*enote) + i*(365*enote) + i),]
+#     tab <- izracun_N(tab)
+#     tab$entry20 <- entry_s1(tab)
+#     tab$entry55 <- entry_s2(tab)
+#     tab$tedenski_N <- tedenski_N(tab)
+#     ifelse(strategija == "S1", pregled1 <- turtle_s1(tab, zacetni_kapital), pregled1 <- turtle_s2(tab, zacetni_kapital))
+#     pregled <- rbind(pregled, pregled1)
+#   }
+#   pregled
+# }
 
 #graf kandidatov za vstop v pozicijo
 #še pike v legendo
@@ -363,7 +363,7 @@ racunanje <- function(tabela){
 g_vstopi(racunanje(btc_1day)[1983:2343,], "S1")
 g_vstopi(racunanje(btc_1day)[1983:2343,], "S2")
 
-#graf kandidatov za izstop iz pozicijo
+
 
 
 #########
@@ -375,59 +375,59 @@ load("databtc_1h.Rda")
 load("databtc_1day.Rda")
 
 
-##PRVO LETO
-#2012 je bilo prestopno leto, torej 366 dni + 20 dni za izraun prvega N + 1 dan za true range
-test_1y <- btc_1day[1:387,]
-test_1y <- izracun_N(test_1y)
-
-test_1y$entry20 <- entry_s1(test_1y)
-test_1y$entry55 <- entry_s2(test_1y)
-g_vstopi(test_1y, "S2")
-
-test_1y$tedenski_N <- tedenski_N(test_1y)
-
-razlicni_zk <- rbind(turtle_s2(test_1y, 1000000), turtle_s2(test_1y, 100000), turtle_s2(test_1y, 10000), turtle_s2(test_1y, 1000))
-
-
-##DRUGO LETO
-test_2y <- btc_1day[388:753,]
-test_2y <- izracun_N(test_2y)
-
-test_2y$entry20 <- entry_s1(test_2y)
-test_2y$entry55 <- entry_s2(test_2y)
-g_vstopi(test_2y, "S2")
-
-test_2y$tedenski_N <- tedenski_N(test_2y)
-
-razlicni_zk <- rbind(turtle_s2(test_2y, 1000000), turtle_s2(test_2y, 100000), turtle_s2(test_2y, 10000), turtle_s2(test_2y, 1000))
-
-
-##TRETJE LETO
-test_3y <- btc_1day[754:1119,]
-test_3y <- izracun_N(test_3y)
-
-test_3y$entry20 <- entry_s1(test_3y)
-test_3y$entry55 <- entry_s2(test_3y)
-g_vstopi(test_3y, "S2")
-
-test_3y$tedenski_N <- tedenski_N(test_3y)
-
-razlicni_zk <- rbind(turtle_s2(test_3y, 1000000), turtle_s2(test_3y, 100000), turtle_s2(test_3y, 10000), turtle_s2(test_3y, 1000))
-
-
-S1btc_dobicki5let_1dan <- pregled_5ih_let(btc_1day, 1000000, 1, "S1")
-save(S1btc_dobicki5let_1dan, file = "S1btc_dobicki5let_1dan.Rda")
-S1btc_dobicki5let_1h <- pregled_5ih_let(btc_1h, 1000000, 24, "S1")
-save(S1btc_dobicki5let_1h, file = "S1btc_dobicki5let_1h.Rda")
-S1btc_dobicki5let_5min <- pregled_5ih_let(btc_5min, 1000000, 24*12, "S1")
-save(S1btc_dobicki5let_5min, file = "S1btc_dobicki5let_5min.Rda")
-
-S2btc_dobicki5let_1dan <- pregled_5ih_let(btc_1day, 1000000, 1, "S2")
-save(S2btc_dobicki5let_1dan, file = "S2btc_dobicki5let_1dan.Rda")
-S2btc_dobicki5let_1h <- pregled_5ih_let(btc_1h, 1000000, 24, "S2")
-save(S2btc_dobicki5let_1h, file = "S2btc_dobicki5let_1h.Rda")
-S2btc_dobicki5let_5min <- pregled_5ih_let(btc_5min, 1000000, 24*12, "S2")
-save(S2btc_dobicki5let_5min, file = "S2btc_dobicki5let_5min.Rda")
+# ##PRVO LETO
+# #2012 je bilo prestopno leto, torej 366 dni + 20 dni za izraun prvega N + 1 dan za true range
+# test_1y <- btc_1day[1:387,]
+# test_1y <- izracun_N(test_1y)
+# 
+# test_1y$entry20 <- entry_s1(test_1y)
+# test_1y$entry55 <- entry_s2(test_1y)
+# g_vstopi(test_1y, "S2")
+# 
+# test_1y$tedenski_N <- tedenski_N(test_1y)
+# 
+# razlicni_zk <- rbind(turtle_s2(test_1y, 1000000), turtle_s2(test_1y, 100000), turtle_s2(test_1y, 10000), turtle_s2(test_1y, 1000))
+# 
+# 
+# ##DRUGO LETO
+# test_2y <- btc_1day[388:753,]
+# test_2y <- izracun_N(test_2y)
+# 
+# test_2y$entry20 <- entry_s1(test_2y)
+# test_2y$entry55 <- entry_s2(test_2y)
+# g_vstopi(test_2y, "S2")
+# 
+# test_2y$tedenski_N <- tedenski_N(test_2y)
+# 
+# razlicni_zk <- rbind(turtle_s2(test_2y, 1000000), turtle_s2(test_2y, 100000), turtle_s2(test_2y, 10000), turtle_s2(test_2y, 1000))
+# 
+# 
+# ##TRETJE LETO
+# test_3y <- btc_1day[754:1119,]
+# test_3y <- izracun_N(test_3y)
+# 
+# test_3y$entry20 <- entry_s1(test_3y)
+# test_3y$entry55 <- entry_s2(test_3y)
+# g_vstopi(test_3y, "S2")
+# 
+# test_3y$tedenski_N <- tedenski_N(test_3y)
+# 
+# razlicni_zk <- rbind(turtle_s2(test_3y, 1000000), turtle_s2(test_3y, 100000), turtle_s2(test_3y, 10000), turtle_s2(test_3y, 1000))
+# 
+# 
+# S1btc_dobicki5let_1dan <- pregled_5ih_let(btc_1day, 1000000, 1, "S1")
+# save(S1btc_dobicki5let_1dan, file = "S1btc_dobicki5let_1dan.Rda")
+# S1btc_dobicki5let_1h <- pregled_5ih_let(btc_1h, 1000000, 24, "S1")
+# save(S1btc_dobicki5let_1h, file = "S1btc_dobicki5let_1h.Rda")
+# S1btc_dobicki5let_5min <- pregled_5ih_let(btc_5min, 1000000, 24*12, "S1")
+# save(S1btc_dobicki5let_5min, file = "S1btc_dobicki5let_5min.Rda")
+# 
+# S2btc_dobicki5let_1dan <- pregled_5ih_let(btc_1day, 1000000, 1, "S2")
+# save(S2btc_dobicki5let_1dan, file = "S2btc_dobicki5let_1dan.Rda")
+# S2btc_dobicki5let_1h <- pregled_5ih_let(btc_1h, 1000000, 24, "S2")
+# save(S2btc_dobicki5let_1h, file = "S2btc_dobicki5let_1h.Rda")
+# S2btc_dobicki5let_5min <- pregled_5ih_let(btc_5min, 1000000, 24*12, "S2")
+# save(S2btc_dobicki5let_5min, file = "S2btc_dobicki5let_5min.Rda")
 
 
 ###########
@@ -486,29 +486,30 @@ btc_1h_dobicki_500_S1 <- dobicki(btc_1h, 1000000, 500, "S1")
 btc_1h_dobicki_1000_S1 <- dobicki(btc_1h, 1000000, 1000, "S1")
 btc_1h_dobicki_1800_S1 <- dobicki(btc_1h, 1000000, 1800, "S1")
 
+# btc_1h_dobicki_360_S2 <- dobicki(btc_1h, 1000000, 360, "S2")
+# btc_1h_dobicki_500_S2 <- dobicki(btc_1h, 1000000, 500, "S2")
+# btc_1h_dobicki_1000_S2 <- dobicki(btc_1h, 1000000, 1000, "S2")
+# btc_1h_dobicki_1800_S2 <- dobicki(btc_1h, 1000000, 1800, "S2")
+btc_1h_dobicki_360_S2 <- dobicki_hitreje(tabela = btc_1h, obdobje = 360, strategija = "S2")
+btc_1h_dobicki_500_S2 <- dobicki_hitreje(tabela = btc_1h, obdobje = 500, strategija = "S2")
+btc_1h_dobicki_1000_S2 <- dobicki_hitreje(tabela = btc_1h, obdobje = 1000, strategija = "S2")
+btc_1h_dobicki_1800_S1 <- dobicki_hitreje(tabela = btc_1h, strategija =  "S1")
+
+
+#5 min
+btc_5min_dobicki_360_S1 <- dobicki_hitreje(tabela = btc_5min, obdobje = 360, strategija = "S1")
+btc_5min_dobicki_500_S1 <- dobicki_hitreje(tabela = btc_5min, obdobje = 500, strategija = "S1")
+btc_5min_dobicki_1000_S1 <- dobicki_hitreje(tabela = btc_5min, obdobje = 1000, strategija = "S1")
 #nisem še pognal:
-btc_1h_dobicki_360_S2 <- dobicki(btc_1h, 1000000, 360, "S2")
-btc_1h_dobicki_500_S2 <- dobicki(btc_1h, 1000000, 500, "S2")
-btc_1h_dobicki_1000_S2 <- dobicki(btc_1h, 1000000, 1000, "S2")
-btc_1h_dobicki_1800_S2 <- dobicki(btc_1h, 1000000, 1800, "S2")
+btc_5min_dobicki_1800_S1 <- dobicki_hitreje(tabela = btc_5min, strategija =  "S1")
 
-#########
-# GRAFI #
-#########
+btc_5min_dobicki_360_S2 <- dobicki_hitreje(tabela = btc_5min, obdobje = 360, strategija = "S2")
+btc_5min_dobicki_500_S2 <- dobicki_hitreje(tabela = btc_5min, obdobje = 500, strategija = "S2")
+#nisem še pognal:
+btc_5min_dobicki_1000_S2 <- dobicki_hitreje(tabela = btc_5min, obdobje = 1000, strategija = "S2")
+btc_5min_dobicki_1800_S2 <- dobicki_hitreje(tabela = btc_5min, strategija =  "S2")
 
-# !!! Vsi grafi so narejeni samo za S1 !!!
-
-#graf kako so razpršeni dobički
-g_dobicki <- function(vrednosti, st_bin, obdobje){
-  ggplot(data.frame(vrednosti))+
-    geom_histogram(aes(vrednosti), bins = st_bin)+
-    theme_minimal()+
-    ggtitle(paste0(obdobje, " dnevno trgovanje" ))+
-    xlab("Dobiček v 1000")+
-    ylab("Število")+
-    theme(plot.title = element_text(hjust = 0.5))
-}
-
+# Zaradi grafov delimo s 1000
 #btc_dobicki_360_S1 <- btc_dobicki_360_S1/1000
 #btc_dobicki_500_S1 <- btc_dobicki_500_S1/1000
 #btc_dobicki_1000_S1 <- btc_dobicki_1000_S1/1000
@@ -525,6 +526,35 @@ g_dobicki <- function(vrednosti, st_bin, obdobje){
 #btc_dobicki_500_S2_2 <- btc_dobicki_500_S2_2/1000
 #btc_dobicki_1000_S2_2 <- btc_dobicki_1000_S2_2/1000
 #btc_dobicki_1800_S2_2 <- btc_dobicki_1800_S2_2/1000
+btc_1h_dobicki_360_S1 <- btc_1h_dobicki_360_S1/1000
+btc_1h_dobicki_500_S1 <- btc_1h_dobicki_500_S1/1000
+btc_1h_dobicki_1000_S1 <- btc_1h_dobicki_1000_S1/1000
+btc_1h_dobicki_1800_S1 <- btc_1h_dobicki_1800_S1/1000
+btc_1h_dobicki_360_S2 <- btc_1h_dobicki_360_S2/1000
+btc_1h_dobicki_500_S2 <- btc_1h_dobicki_500_S2/1000
+btc_1h_dobicki_1000_S2 <- btc_1h_dobicki_1000_S2/1000
+btc_1h_dobicki_1800_S2 <- btc_1h_dobicki_1800_S2/1000
+
+
+
+#########
+# GRAFI #
+#########
+
+# !!! Vsi grafi so narejeni samo za S1 !!!
+
+#graf kako so razpršeni dobički
+g_dobicki <- function(vrednosti, st_bin, obdobje){
+  ggplot(data.frame(vrednosti))+
+    geom_histogram(aes(vrednosti), bins = st_bin)+
+    #scale_y_log10()+
+    theme_minimal()+
+    ggtitle(paste0(obdobje, " dnevno trgovanje" ))+
+    xlab("Dobiček v 1000")+
+    ylab("Število obdobij trgovanja")+
+    theme(plot.title = element_text(hjust = 0.5))
+}
+
 
 library(gridExtra)
 library(ggplot2)
@@ -549,6 +579,7 @@ grid.arrange(g_dobicki(btc_dobicki_360_S1[btc_dobicki_360_S1 < 7], 100, 360),
              g_dobicki(btc_dobicki_1000_S1[btc_dobicki_1000_S1 < 7], 100, 1000), 
              g_dobicki(btc_dobicki_1800_S1[btc_dobicki_1800_S1 < 45], 100, 1800), 
              ncol = 2, nrow = 2)
+
 
 
 # število dobičkov nad določeno mejo
@@ -578,11 +609,12 @@ dobicki_v_casu <- function(tabela, obdobje, prikaz = 1){
   ifelse(prikaz == 500, cas <- "06.06.2013", cas <- "23.01.2012")
   ggplot(data.frame(tabela))+
     geom_point(aes(x = (1:length(tabela)), y = tabela), fill="blue", color="blue", shape = 20, size = 0.01)+
+    #scale_y_log10()+
     theme_minimal()+
     ggtitle(paste0("Dobički skozi čas", ", ",obdobje, " dnevno trgovanje" ))+
     ylab("Dobički v 1000")+
     xlab(paste0("Čas (začetek = ", cas, ")"))+
-    ylim(c(min(0, min(tabela)), max(tabela)))+
+    #ylim(c(min(0, min(tabela)), max(tabela)))+
     theme(plot.title = element_text(hjust = 0.9))
 }
 
@@ -634,6 +666,18 @@ pregled_btc_S1_2 <- pregled_dobicki(btc_dobicki_360_S1_2, btc_dobicki_500_S1_2, 
 pregled_btc_S2_2 <- pregled_dobicki(btc_dobicki_360_S2_2, btc_dobicki_500_S2_2, btc_dobicki_1000_S2_2, 
                                   btc_dobicki_1800_S2_2, 50000, "S2")
 
+#1h
+pregled_btc_1h_S1 <- pregled_dobicki(btc_1h_dobicki_360_S1, btc_1h_dobicki_500_S1, btc_1h_dobicki_1000_S1, 
+                                     btc_1h_dobicki_1800_S1, 1000000, "S1")
+pregled_btc_1h_S2 <- pregled_dobicki(btc_1h_dobicki_360_S2, btc_1h_dobicki_500_S2, btc_1h_dobicki_1000_S2, 
+                                     btc_1h_dobicki_1800_S2, 1000000, "S2")
+
+#5min
+pregled_btc_5min_S1 <- pregled_dobicki(btc_5min_dobicki_360_S1, btc_5min_dobicki_500_S1, btc_5min_dobicki_1000_S1, 
+                                     btc_5min_dobicki_1800_S1, 1000000, "S1")
+pregled_btc_5min_S2 <- pregled_dobicki(btc_5min_dobicki_360_S2, btc_5min_dobicki_500_S2, btc_5min_dobicki_1000_S2, 
+                                     btc_5min_dobicki_1800_S2, 1000000, "S2")
+
 
 ################
 # Lepše tabele #
@@ -661,6 +705,13 @@ flextabela_pregled(pregled_btc_S1, 0)
 flextabela_pregled(pregled_btc_S2, 0)
 flextabela_pregled(pregled_btc_S1_2, 0)
 flextabela_pregled(pregled_btc_S2_2, 0)
+#1h
+flextabela_pregled(pregled_btc_1h_S1, 0)
+flextabela_pregled(pregled_btc_1h_S2, 0)
+#5min
+flextabela_pregled(pregled_btc_5min_S1, 0)
+flextabela_pregled(pregled_btc_5min_S2, 0)
+
 
 #################################
 # Compaunded annual growth rate #
@@ -689,16 +740,25 @@ flextabela_pregled(pregled_cagr(pregled_btc_S1, strategija = "S1"), 3)
 flextabela_pregled(pregled_cagr(pregled_btc_S2, strategija = "S2"), 3)
 flextabela_pregled(pregled_cagr(pregled_btc_S1_2, zacetni_kapital = 50000, "S1"), 3)
 flextabela_pregled(pregled_cagr(pregled_btc_S2_2, zacetni_kapital = 50000, "S2"), 3)
+#1h
+flextabela_pregled(pregled_cagr(pregled_btc_1h_S1, strategija = "S1"), 3)
+flextabela_pregled(pregled_cagr(pregled_btc_1h_S2, strategija = "S2"), 3)
+#5min
+flextabela_pregled(pregled_cagr(pregled_btc_5min_S1, strategija = "S1"), 3)
+flextabela_pregled(pregled_cagr(pregled_btc_5min_S2, strategija = "S2"), 3)
+
 
 #######################
 # pred in po letu 2014#
 #######################
 
-pred_po_2014 <- function(l1, l2, l3, l4){
-  pred_2014 <- c(mean(l1[1:700]*1000), mean(l2[1:700]*1000), mean(l3[1:700]*1000), mean(l4*1000))
+pred_po_2014 <- function(l1, l2, l3, l4, predpo2014){
+  ifelse(predpo2014 == 700, skala <- length(l4), skala <- predpo2014)
+  pred_2014 <- c(mean(l1[1:predpo2014]*1000), mean(l2[1:predpo2014]*1000), mean(l3[1:predpo2014]*1000), mean(l4[1:skala]*1000))
   cagr_pred_2014 <- c(cagr(pred_2014[1], obdobje = 360), cagr(pred_2014[2], obdobje = 500), 
                     cagr(pred_2014[3], obdobje = 1000), cagr(pred_2014[4]))
-  po_2014 <- c(mean(l1[701:length(l1)]*1000), mean(l2[701:length(l2)]*1000), mean(l3[701:length(l3)]*1000), 0)
+  ifelse(predpo2014 == 700, skala1 <- 0, skala1 <- mean(l4[(predpo2014+1):length(l4)]*1000))
+  po_2014 <- c(mean(l1[(predpo2014+1):length(l1)]*1000), mean(l2[(predpo2014+1):length(l2)]*1000), mean(l3[(predpo2014+1):length(l3)]*1000), skala1)
   cagr_po_2014 <- c(cagr(po_2014[1], obdobje = 360), cagr(po_2014[2], obdobje = 500), 
                     cagr(po_2014[3], obdobje = 1000), cagr(po_2014[4]))
   data.frame("sistem_obdobje" = c("S1, 360", "S1, 500", "S1, 1000", "S1, 1800"), 
@@ -708,26 +768,42 @@ pred_po_2014 <- function(l1, l2, l3, l4){
 }
 
 
-S1pred_po_2014 <- pred_po_2014(btc_dobicki_360_S1, btc_dobicki_500_S1, btc_dobicki_1000_S1, btc_dobicki_1800_S1)
+S1pred_po_2014 <- pred_po_2014(btc_dobicki_360_S1, btc_dobicki_500_S1, btc_dobicki_1000_S1, btc_dobicki_1800_S1, 700)
+#1h
+S1_1h_pred_po_2014 <- pred_po_2014(btc_1h_dobicki_360_S1, btc_1h_dobicki_500_S1, btc_1h_dobicki_1000_S1, 
+                                   btc_1h_dobicki_1800_S1, 17530)
 
 # Flextabela
 flextabela_pregled(S1pred_po_2014, 0)
+#1h
+flextabela_pregled(S1_1h_pred_po_2014, 0)
 
-sd_pred_po_2014 <- function(l1, l2, l3, l4){
-  sd_pred_2014 <- c(sd(l1[1:700]*1000), sd(l2[1:700]*1000), sd(l3[1:700]*1000), sd(l4*1000))
-  pred_2014 <- c(mean(l1[1:700]*1000), mean(l2[1:700]*1000), mean(l3[1:700]*1000), mean(l4*1000))
+
+
+sd_pred_po_2014 <- function(l1, l2, l3, l4, predpo2014){
+  ifelse(predpo2014 == 700, skala <- length(l4), skala <- predpo2014)
+  sd_pred_2014 <- c(sd(l1[1:predpo2014]*1000), sd(l2[1:predpo2014]*1000), sd(l3[1:predpo2014]*1000), sd(l4[1:skala]*1000))
+  pred_2014 <- c(mean(l1[1:predpo2014]*1000), mean(l2[1:predpo2014]*1000), mean(l3[1:predpo2014]*1000), mean(l4[1:skala]*1000))
   kolicnik_pred_2014 <- pred_2014/sd_pred_2014
-  sd_po_2014 <- c(sd(l1[701:length(l1)]*1000), sd(l2[701:length(l2)]*1000), sd(l3[701:length(l3)]*1000), 0)
-  po_2014 <- c(mean(l1[701:length(l1)]*1000), mean(l2[701:length(l2)]*1000), mean(l3[701:length(l3)]*1000), 0)
+  ifelse(predpo2014 == 700, skala2 <- 0, skala2 <- sd(l4[(predpo2014+1):length(l4)]*1000))
+  sd_po_2014 <- c(sd(l1[(predpo2014+1):length(l1)]*1000), sd(l2[(predpo2014+1):length(l2)]*1000), sd(l3[(predpo2014+1):length(l3)]*1000), skala2)
+  ifelse(predpo2014 == 700, skala1 <- 0, skala1 <- mean(l4[(predpo2014+1):length(l4)]*1000))
+  po_2014 <- c(mean(l1[(predpo2014+1):length(l1)]*1000), mean(l2[(predpo2014+1):length(l2)]*1000), mean(l3[(predpo2014+1):length(l3)]*1000), skala1)
   kolicnik_po_2014 <- po_2014/sd_po_2014
   data.frame("sistem_obdobje" = c("S1, 360", "S1, 500", "S1, 1000", "S1, 1800"), 
              "pred_2014" = sd_pred_2014, "po_2014" = sd_po_2014, 
              "kolicnik_pred" = kolicnik_pred_2014, "kolicnik_po" = kolicnik_po_2014)
 }
 
-sd_pred_po_2014 <- sd_pred_po_2014(btc_dobicki_360_S1, btc_dobicki_500_S1, btc_dobicki_1000_S1, 
-                                   btc_dobicki_1800_S1)
-
+S1sd_pred_po_2014 <- sd_pred_po_2014(btc_dobicki_360_S1, btc_dobicki_500_S1, btc_dobicki_1000_S1, 
+                                   btc_dobicki_1800_S1, 700)
+#1h
+S1sd_1h_pred_po_2014 <- sd_pred_po_2014(btc_1h_dobicki_360_S1, btc_1h_dobicki_500_S1, btc_1h_dobicki_1000_S1, 
+                                   btc_1h_dobicki_1800_S1, 17530)
 
 # Flextabela
-flextabela_pregled(sd_pred_po_2014, 1)
+flextabela_pregled(S1sd_pred_po_2014, 1)
+#1h
+flextabela_pregled(S1sd_1h_pred_po_2014, 1)
+
+
