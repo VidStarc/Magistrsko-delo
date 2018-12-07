@@ -24,7 +24,7 @@ pretvori <- function(coin, enota, minute){
 #funkcija za 5minutne podatke
 pretvori_5min <- function(coin, enota, minute){
   #enota <- 5min: 300, 1h: 3600, 1day: 86400
-  enote <- enote/300
+  enote <- enota/300
   minute <- minute/5
   del <- as.numeric(coin$date)/enota
   ind <- which(del == round(del))
@@ -50,8 +50,8 @@ pretvori_5min <- function(coin, enota, minute){
 btc_min <- read.csv("podatki/BTC_USD_min.csv", header = T, sep = ",")
 btc_min$Timestamp <- anytime(btc_min$Timestamp)
 
-#plot(btc_min$Timestamp, btc_min$Close, type = "l")
-
+plot(btc_1day$Timestamp[1700:2200], btc_1day$Close[1700:2200], type = "l")
+plot(btc_1day$Timestamp[300:800], btc_1day$Close[300:800], type = "l")
 
 btc_5min <- pretvori(btc_min, 300, 5)
 save(btc_5min, file = "databtc_5min.Rda")

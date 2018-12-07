@@ -382,8 +382,7 @@ dobicki_hitreje <- function(tabela, dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55, 
   tab <- izracun_za_analizo(tabela, dnevi_N, vstop_s1, vstop_s2, cena)
   dobicki <- c()
   if(strategija == "S1"){
-    #(nrow(tab) - obdobje + 1)
-    for(i in 100:1000){
+    for(i in 1:(nrow(tab) - obdobje + 1)){
       tmp <- tab[i:(obdobje + i - 1),]
       cena2 <- odlocitev_cena(tmp, cena)
       dobicki <- c(dobicki, turtle_s1_spx(tmp, zacetni_kapital, izstop_s1, cena2, add, sl))

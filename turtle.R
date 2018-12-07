@@ -500,13 +500,12 @@ btc_1h_dobicki_1800_S1 <- dobicki_hitreje(tabela = btc_1h, strategija =  "S1")
 btc_5min_dobicki_360_S1 <- dobicki_hitreje(tabela = btc_5min, obdobje = 360, strategija = "S1")
 btc_5min_dobicki_500_S1 <- dobicki_hitreje(tabela = btc_5min, obdobje = 500, strategija = "S1")
 btc_5min_dobicki_1000_S1 <- dobicki_hitreje(tabela = btc_5min, obdobje = 1000, strategija = "S1")
-#nisem še pognal:
 btc_5min_dobicki_1800_S1 <- dobicki_hitreje(tabela = btc_5min, strategija =  "S1")
 
 btc_5min_dobicki_360_S2 <- dobicki_hitreje(tabela = btc_5min, obdobje = 360, strategija = "S2")
 btc_5min_dobicki_500_S2 <- dobicki_hitreje(tabela = btc_5min, obdobje = 500, strategija = "S2")
-#nisem še pognal:
 btc_5min_dobicki_1000_S2 <- dobicki_hitreje(tabela = btc_5min, obdobje = 1000, strategija = "S2")
+#nisem še pognal:
 btc_5min_dobicki_1800_S2 <- dobicki_hitreje(tabela = btc_5min, strategija =  "S2")
 
 # Zaradi grafov delimo s 1000
@@ -526,14 +525,22 @@ btc_5min_dobicki_1800_S2 <- dobicki_hitreje(tabela = btc_5min, strategija =  "S2
 #btc_dobicki_500_S2_2 <- btc_dobicki_500_S2_2/1000
 #btc_dobicki_1000_S2_2 <- btc_dobicki_1000_S2_2/1000
 #btc_dobicki_1800_S2_2 <- btc_dobicki_1800_S2_2/1000
-btc_1h_dobicki_360_S1 <- btc_1h_dobicki_360_S1/1000
-btc_1h_dobicki_500_S1 <- btc_1h_dobicki_500_S1/1000
-btc_1h_dobicki_1000_S1 <- btc_1h_dobicki_1000_S1/1000
-btc_1h_dobicki_1800_S1 <- btc_1h_dobicki_1800_S1/1000
-btc_1h_dobicki_360_S2 <- btc_1h_dobicki_360_S2/1000
-btc_1h_dobicki_500_S2 <- btc_1h_dobicki_500_S2/1000
-btc_1h_dobicki_1000_S2 <- btc_1h_dobicki_1000_S2/1000
-btc_1h_dobicki_1800_S2 <- btc_1h_dobicki_1800_S2/1000
+# btc_1h_dobicki_360_S1 <- btc_1h_dobicki_360_S1/1000
+# btc_1h_dobicki_500_S1 <- btc_1h_dobicki_500_S1/1000
+# btc_1h_dobicki_1000_S1 <- btc_1h_dobicki_1000_S1/1000
+# btc_1h_dobicki_1800_S1 <- btc_1h_dobicki_1800_S1/1000
+# btc_1h_dobicki_360_S2 <- btc_1h_dobicki_360_S2/1000
+# btc_1h_dobicki_500_S2 <- btc_1h_dobicki_500_S2/1000
+# btc_1h_dobicki_1000_S2 <- btc_1h_dobicki_1000_S2/1000
+# btc_1h_dobicki_1800_S2 <- btc_1h_dobicki_1800_S2/1000
+btc_5min_dobicki_360_S1 <- btc_5min_dobicki_360_S1/1000
+btc_5min_dobicki_500_S1 <- btc_5min_dobicki_500_S1/1000
+btc_5min_dobicki_1000_S1 <- btc_5min_dobicki_1000_S1/1000
+btc_5min_dobicki_1800_S1 <- btc_5min_dobicki_1800_S1/1000
+btc_5min_dobicki_360_S2 <- btc_5min_dobicki_360_S2/1000
+btc_5min_dobicki_500_S2 <- btc_5min_dobicki_500_S2/1000
+btc_5min_dobicki_1000_S2 <- btc_5min_dobicki_1000_S2/1000
+btc_5min_dobicki_1800_S2 <- btc_5min_dobicki_1800_S2/1000
 
 
 
@@ -732,7 +739,7 @@ pregled_cagr <- function(tabela, zacetni_kapital = 1000000, strategija){
     cagr <- c(cagr, paste0(cagr(tabela$povprecje[i], zacetni_kapital = zacetni_kapital, obdobje = obdobje[i]), " %"))
     ratio <- c(ratio, tabela$povprecje[i]/tabela$sd[i])
   }
-  pregled <- data.frame("sistem_obdobje" = s_e, "količnik" = ratio, "lsd" = cagr)
+  pregled <- data.frame("sistem_obdobje" = s_e, "količnik" = ratio, "psd" = cagr)
   pregled
 }
 
@@ -763,8 +770,8 @@ pred_po_2014 <- function(l1, l2, l3, l4, predpo2014){
                     cagr(po_2014[3], obdobje = 1000), cagr(po_2014[4]))
   data.frame("sistem_obdobje" = c("S1, 360", "S1, 500", "S1, 1000", "S1, 1800"), 
              "pred_2014" = pred_2014, "po_2014" = po_2014, 
-             "lsd_pred_2014" = paste0(cagr_pred_2014, " %"), 
-             "lsd_po_2014" = paste0(cagr_po_2014, " %"))
+             "psd_pred_2014" = paste0(cagr_pred_2014, " %"), 
+             "psd_po_2014" = paste0(cagr_po_2014, " %"))
 }
 
 
