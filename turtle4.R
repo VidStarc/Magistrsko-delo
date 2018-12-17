@@ -40,6 +40,8 @@ nxt_dobicki_360_S1 <- dobicki_hitreje(tabela = nxt_1day, obdobje = 360, strategi
 rep_dobicki_360_S1 <- dobicki_hitreje(tabela = rep_1day, obdobje = 360, strategija = "S1")
 #rep_dobicki_360_S2 <- dobicki_hitreje(tabela = rep_1day, obdobje = 360, strategija = "S2")
 
+###############################################
+
 pregled_coin <- function(vector, coin){
   data.frame("kovanec" = coin,
              "st_podatkov" = length(vector),
@@ -81,18 +83,18 @@ coin_pred_po <- rbind(pregled_pred_po(eth_dobicki_360_S1, "ETH", 0, 148, "2016")
 flextabela_pregled(coin_pred_po, 0)
 
 
-# Fitanje porazdelitve
-library(MASS)
-hist(btc_dobicki_360_S1, breaks = 100)
-x <- seq(0, 2000, length=2000)
-y <- 934000*dnorm(x, mean=fitdistr(btc_dobicki_360_S1, "normal")[[1]][[1]], 
-                  sd=fitdistr(btc_dobicki_360_S1, "normal")[[1]][[2]])
-y <- 5111*dcauchy(x, location = fitdistr(btc_dobicki_360_S1, "cauchy")$estimate[[1]], 
-                  scale = fitdistr(btc_dobicki_360_S1, "cauchy")$estimate[[2]])
-y <- 23965.5*dgamma(x, shape = fitdistr(btc_dobicki_360_S1, "gamma")$estimate[[1]], 
-                    rate = fitdistr(btc_dobicki_360_S1, "gamma")$estimate[[2]])
-lines(x, y, lwd = 1.5)
-plot(x, y, type = "l", lwd = 1.5)
+# # Fitanje porazdelitve
+# library(MASS)
+# hist(btc_dobicki_360_S1, breaks = 100)
+# x <- seq(0, 2000, length=2000)
+# y <- 934000*dnorm(x, mean=fitdistr(btc_dobicki_360_S1, "normal")[[1]][[1]], 
+#                   sd=fitdistr(btc_dobicki_360_S1, "normal")[[1]][[2]])
+# y <- 5111*dcauchy(x, location = fitdistr(btc_dobicki_360_S1, "cauchy")$estimate[[1]], 
+#                   scale = fitdistr(btc_dobicki_360_S1, "cauchy")$estimate[[2]])
+# y <- 23965.5*dgamma(x, shape = fitdistr(btc_dobicki_360_S1, "gamma")$estimate[[1]], 
+#                     rate = fitdistr(btc_dobicki_360_S1, "gamma")$estimate[[2]])
+# lines(x, y, lwd = 1.5)
+# plot(x, y, type = "l", lwd = 1.5)
 
 
 
@@ -195,12 +197,12 @@ flextabela_int <- function(tabela, st_decimalk){
 flextabela_int(pregled_int, 0)
 
 
-# Cumulative distribution function
-cdf <- c()
-vsota <- 0
-for(i in 1:nrow(proba)){
-  vsota <- vsota + proba$Freq[i]
-  cdf <- c(cdf, vsota)
-}
-proba$cdf <- cdf
-plot(x = as.numeric(proba$Var1), y = proba$cdf, type = "l")
+# # Cumulative distribution function
+# cdf <- c()
+# vsota <- 0
+# for(i in 1:nrow(proba)){
+#   vsota <- vsota + proba$Freq[i]
+#   cdf <- c(cdf, vsota)
+# }
+# proba$cdf <- cdf
+# plot(x = as.numeric(proba$Var1), y = proba$cdf, type = "l")

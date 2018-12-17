@@ -32,8 +32,9 @@ lok_ekstremi <- function(tabela, cena, velikost_oken){
   list("kje_min" = whichMinz, "minz" = minz, "kje_max" = whichMaxz, "maxz" = maxz)
 }
 
-library(Ckmeans.1d.dp)
+
 prepoznavalnik_SinR <- function(tabela, cena, velikost_oken){
+  library(Ckmeans.1d.dp)
   eks <- lok_ekstremi(tabela, cena, velikost_oken)
   minz <- eks$minz
   maxz <- eks$maxz
@@ -98,24 +99,27 @@ lines(x = 1:100, y = rep(support$podpore[6],100), col = "blue")
 #entry: 1=go long, 2=go short
 #linija: 1 = podpora, 2 = odpor
 #koliko_casa: oddaljenost od linije (koliko dni pozneje smo vstopili)
-vstop_SinR <- function(tabela, cena, toleranca){
+vstop_SinR <- function(tabela, cena, toleranca, crte){
 
-  podpore <- SinR$podpore
-  odpori <- as.numeric(SinR$odpori)
-  kje_min <- SinR$kje_min
-  kje_max <- SinR$kje_max
-  l_min <- as.numeric(SinR$l_min)
-  l_max <- as.numeric(SinR$l_max)
+  podpore <- crte$podpore
+  odpori <- as.numeric(crte$odpori)
+  kje_min <- crte$kje_min
+  kje_max <- crte$kje_max
+  l_min <- as.numeric(crte$l_min)
+  l_max <- as.numeric(crte$l_max)
   entry <- rep(0, nrow(tabela))
   linija <- rep(0, nrow(tabela))
   koliko_casa <- rep(0, nrow(tabela))
   
   # obrat podpora
-  # prvi minimum izpustimo, saj ne vemo kakšen je trend
-  for(i in (2:length(l_min))){
+  for(i in (1:length(l_min))){
     real_time <- kje_min[i]
+    if(real_time == 1){
+      i <- 2
+      real_time <- kje_min[i]}
     opazovana_podpora <- podpore[which.min(abs(l_min[i]-podpore))]
     kje_se_dotika_te_podpore <- which(abs(l_min - opazovana_podpora) <= toleranca)
+    if(is.na(kje_se_dotika_te_podpore[1])){kje_se_dotika_te_podpore[1] <- Inf}
     if((abs(l_min[i] - opazovana_podpora) <= toleranca) & (kje_se_dotika_te_podpore[1] < i) & 
        (cena[real_time - 1,] > cena[real_time,]) & (cena[real_time + 1,] > cena[real_time,])){
       entry[real_time + 1] <- 1
@@ -125,11 +129,15 @@ vstop_SinR <- function(tabela, cena, toleranca){
   }
   
   # obrat odpor
-  # prvi maksimum izpustimo, saj ne vemo kakšen je trend
-  for(i in (2:length(l_max))){
+  for(i in (1:length(l_max))){
     real_time <- kje_max[i]
+    if(real_time == 1){
+      i <- 2
+      real_time <- kje_max[i]
+    }
     opazovani_odpor <- odpori[which.min(abs(l_max[i]-odpori))]
     kje_se_dotika_tega_odpora <- which(abs(l_max - opazovani_odpor) <= toleranca)
+    if(is.na(kje_se_dotika_tega_odpora[1])){kje_se_dotika_tega_odpora[1] <- Inf}
     if((abs(l_max[i] - opazovani_odpor) <= toleranca) & (kje_se_dotika_tega_odpora[1] < i) & 
        (cena[real_time - 1,] < cena[real_time,]) & (cena[real_time + 1,] < cena[real_time,])){
       entry[real_time + 1] <- 2
@@ -138,10 +146,16 @@ vstop_SinR <- function(tabela, cena, toleranca){
     }
   }
   
-  # preboj podpora
-  for(i in 1:nrow(tabela)){
-    # še pogoj da je že prej se en miminum dotikal tepodpore
-    if((sum(cena[i,] == podpore) > 0) & (cena[i-1,] > cena[i,]) & (cena[i+1,] < cena[i,])){
+  # preboj podpore
+  for(i in 2:nrow(tabela)){
+    podpore_vmes <- podpore[cena[i-1,] > podpore &  cena[i,] < podpore]
+    if(length(podpore_vmes) > 0){
+      opazovana_podpora <- podpore_vmes[length(podpore_vmes)]
+      kje_se_dotika_te_podpore <- which(abs(l_min - opazovana_podpora) <= toleranca)
+      if(is.na(kje_se_dotika_te_podpore[1])){kje_se_dotika_te_podpore[1] <- Inf}
+    }
+    if((length(podpore_vmes) > 0) & (cena[i-1,] > cena[i,]) & (cena[i+1,] < cena[i,]) & 
+       (kje_se_dotika_te_podpore[1] < i)){
       if((cena[i + 1, ] > opazovana_podpora - toleranca)){
         if(cena[i + 2, ] < opazovana_podpora - toleranca){
           entry[i + 2] <- 2
@@ -162,7 +176,14 @@ vstop_SinR <- function(tabela, cena, toleranca){
     }
     
     # preboj odpor
-    if((sum(cena[i,] == odpori) > 0) & (cena[i-1,] < cena[i,]) & (cena[i+1,] > cena[i,])){
+    odpori_vmes <- odpori[cena[i-1,] < odpori &  cena[i,] > odpori]
+    if(length(odpori_vmes) > 0){
+      opazovani_odpor <- odpori_vmes[length(odpori_vmes)]
+      kje_se_dotika_tega_odpora <- which(abs(l_max - opazovani_odpor) <= toleranca)
+      if(is.na(kje_se_dotika_tega_odpora[1])){kje_se_dotika_tega_odpora[1] <- Inf}
+    }
+    if((length(odpori_vmes) > 0) & (cena[i-1,] < cena[i,]) & (cena[i+1,] > cena[i,]) &
+       (kje_se_dotika_tega_odpora[1] < i)){
       if((cena[i + 1, ] < opazovani_odpor + toleranca)){
         if(cena[i + 2, ] > opazovani_odpor + toleranca){
           entry[i + 2] <- 1
@@ -187,19 +208,16 @@ vstop_SinR <- function(tabela, cena, toleranca){
 
 # Izstopanje iz zmagovalne pozicije
 # rr = risk/reward ... npr. če se odločimo za 1:3 je rr = 3
-win_izstop_SinR <- function(tabela, cena, rr, toleranca){
-  # to funkcijo moraš dat preden razdeljuješ tab na obdobja (npr. 1:360)
-  # poračuna vse izstope
-  # na posameznem obdobju glej samo izstope iz tega obdobja
-  podpore <- SinR$podpore
-  odpori <- as.numeric(SinR$odpori)
+win_izstop_SinR <- function(tabela, cena, rr, toleranca, crte){
+  podpore <- crte$podpore
+  odpori <- as.numeric(crte$odpori)
   izstop <- rep(0, nrow(tabela))
   for(i in 1:nrow(tabela)){
     if(tabela$entry[i] == 1 & tabela$linija[i] == 1){
-      izstop[i] <- kje_max[kje_max > i][1]
+      izstop[i] <- kje_max[kje_max > i][1] + 1
     }
     if(tabela$entry[i] == 2 & tabela$linija[i] == 2){
-      izstop[i] <- kje_min[kje_min > i][1]
+      izstop[i] <- kje_min[kje_min > i][1] + 1
     }
     if(tabela$entry[i] == 2 & tabela$linija[i] == 1){
       #opazovana_podpora <- podpore[which.min(abs(cena[i-koliko_casa[i],]-podpore))]
@@ -220,6 +238,515 @@ win_izstop_SinR <- function(tabela, cena, rr, toleranca){
 }
 
 
+trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
+  kandidati <- which(tabela$entry==1 | tabela$entry==2)
+  vstop <- kandidati[1]
+  if(is.na(vstop)){profit <- 0}
+  else{
+    kdaj_vstopali <- c()
+    kdaj_dodali_enote <- c()
+    profit <- 0
+    profit1 <- c()
+    kdaj_profit <- c()
+    money <- zacetni_kapital
+    
+    while(nrow(tabela) - vstop > 0){
+      kdaj_vstopali <- c(kdaj_vstopali, vstop)
+      cena_vstop <- cena[vstop,]
+      st_btc <- unit(money, tabela$spr_tedenski_N[vstop])/cena_vstop
+      
+      # obrat na podpori
+      if(tabela$entry[vstop]== 1 & tabela$linija[vstop] == 1){
+        izstop <- ifelse(tabela$izstop[vstop] - i_izstop > nrow(tabela) | 
+                           is.na(tabela$izstop[vstop] - i_izstop > nrow(tabela)), nrow(tabela), tabela$izstop[vstop] - i_izstop)
+        cena_izstop <- cena[izstop,]
+        st_enot <- 1
+        stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
+        pol_N <- add*tabela$spr_tedenski_N[vstop]
+        cena_ko_dodamo <- cena_vstop
+        st_btc_dodamo <- st_btc
+        for(i in (vstop+1):(izstop-1)){
+          vstop <- i
+          if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
+            razlika <- cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)]
+            dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
+            if(st_enot + dodamo <= 4){
+              st_enot <- st_enot + dodamo
+              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+              stop_loss <- stop_loss + pol_N*dodamo
+              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+            }
+            else{
+              dodamo <- ifelse(st_enot==2, 2, 1)
+              st_enot <- st_enot + dodamo
+              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+              stop_loss <- stop_loss + pol_N*dodamo
+              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+            }
+          }
+          else{
+            if(cena[i,] <= stop_loss){
+              vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
+              kdaj_profit <- c(kdaj_profit, i)
+              for(j in 1:length(st_btc_dodamo)){
+                profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+              }
+              profit1 <- c(profit1, profit)
+              break}
+          }
+        }
+      }
+      else{
+        # obrat na odporu
+        if(tabela$entry[vstop]== 2 & tabela$linija[vstop] == 2){
+          izstop <- ifelse(tabela$izstop[vstop] - i_izstop > nrow(tabela)  | 
+                             is.na(tabela$izstop[vstop] - i_izstop > nrow(tabela)), nrow(tabela), tabela$izstop[vstop] - i_izstop)
+          cena_izstop <- cena[izstop,]
+          st_enot <- 1
+          stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
+          pol_N <- add*tabela$spr_tedenski_N[vstop]
+          cena_ko_dodamo <- cena_vstop
+          st_btc_dodamo <- st_btc
+          for(i in (vstop+1):(izstop-1)){
+            vstop <- i
+            if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
+              razlika <- abs(cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)])
+              dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
+              if(st_enot + dodamo <= 4){
+                st_enot <- st_enot + dodamo
+                st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+                stop_loss <- stop_loss - pol_N*dodamo
+                kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+                cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+              }
+              else{
+                dodamo <- ifelse(st_enot==2, 2, 1)
+                st_enot <- st_enot + dodamo
+                st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+                stop_loss <- stop_loss - pol_N*dodamo
+                kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+                cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+              }
+            }
+            else{
+              if(cena[i,] <= stop_loss){
+                vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
+                kdaj_profit <- c(kdaj_profit, i)
+                for(j in 1:length(st_btc_dodamo)){
+                  profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+                }
+                profit1 <- c(profit1, profit)
+                break}
+            }
+          }
+        }
+        else{
+          # preboj pri podpori
+          if(tabela$entry[vstop]== 2 & tabela$linija[vstop] == 1){
+            izstop <- ifelse((tabela$izstop[vstop] - i_izstop > nrow(tabela)) | 
+                               is.na(tabela$izstop[vstop] - i_izstop > nrow(tabela)), nrow(tabela), tabela$izstop[vstop] - i_izstop)
+            cena_izstop <- cena[izstop,]
+            st_enot <- 1
+            stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
+            pol_N <- add*tabela$spr_tedenski_N[vstop]
+            cena_ko_dodamo <- cena_vstop
+            st_btc_dodamo <- st_btc
+            for(i in (vstop+1):(izstop-1)){
+              vstop <- i
+              if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
+                razlika <- abs(cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)])
+                dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
+                if(st_enot + dodamo <= 4){
+                  st_enot <- st_enot + dodamo
+                  st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+                  stop_loss <- stop_loss - pol_N*dodamo
+                  kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+                  cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+                }
+                else{
+                  dodamo <- ifelse(st_enot==2, 2, 1)
+                  st_enot <- st_enot + dodamo
+                  st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+                  stop_loss <- stop_loss - pol_N*dodamo
+                  kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+                  cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+                }
+              }
+              else{
+                if(cena[i,] <= stop_loss){
+                  vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
+                  kdaj_profit <- c(kdaj_profit, i)
+                  for(j in 1:length(st_btc_dodamo)){
+                    profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+                  }
+                  profit1 <- c(profit1, profit)
+                  break}
+              }
+            }
+          }
+          else{
+            # preboj pri odporu
+            if(tabela$entry[vstop]== 1 & tabela$linija[vstop] == 2){
+              izstop <- ifelse((tabela$izstop[vstop] - i_izstop > nrow(tabela)) |
+                                 is.na(tabela$izstop[vstop] - i_izstop > nrow(tabela)), nrow(tabela), tabela$izstop[vstop] - i_izstop)
+              cena_izstop <- cena[izstop,]
+              st_enot <- 1
+              stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
+              pol_N <- add*tabela$spr_tedenski_N[vstop]
+              cena_ko_dodamo <- cena_vstop
+              st_btc_dodamo <- st_btc
+              for(i in (vstop+1):(izstop-1)){
+                vstop <- i
+                if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
+                  razlika <- cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)]
+                  dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
+                  if(st_enot + dodamo <= 4){
+                    st_enot <- st_enot + dodamo
+                    st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+                    stop_loss <- stop_loss + pol_N*dodamo
+                    kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+                    cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+                  }
+                  else{
+                    dodamo <- ifelse(st_enot==2, 2, 1)
+                    st_enot <- st_enot + dodamo
+                    st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
+                    stop_loss <- stop_loss + pol_N*dodamo
+                    kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+                    cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+                  }
+                }
+                else{
+                  if(cena[i,] <= stop_loss){
+                    vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
+                    kdaj_profit <- c(kdaj_profit, i)
+                    for(j in 1:length(st_btc_dodamo)){
+                      profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+                    }
+                    profit1 <- c(profit1, profit)
+                    break}
+                }
+              }
+            }
+          }}}
+      if(vstop == (izstop-1)){
+        vstop <- vstop + 1
+        for(j in 1:length(st_btc_dodamo)){
+          profit <- profit + (abs(cena_izstop - cena_ko_dodamo[j]))*st_btc_dodamo[j]
+        }
+        profit1 <- c(profit1, profit)
+        kdaj_profit <- c(kdaj_profit, izstop)
+        vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
+      }
+      #if(profit <= -100000){money <- 0.8*money}
+    }
+    profit
+  }}
+
+
+odlocitev_cena <- function(tabela, cena){
+  if(cena == "Close"){cena1 <- data.frame(tabela$Close)}
+  if(cena == "Low"){cena1 <- data.frame(tabela$Low)}
+  if(cena == "High"){cena1 <- data.frame(tabela$High)}
+  if(cena == "Open"){cena1 <- data.frame(tabela$Open)}
+  cena1
+}
+
+poracuni <- function(tabela, dnevi_N, cena, toleranca, rr){
+  tabela <- tabela[-nrow(tabela),]
+  tab <- spr_N(tabela, dnevi_N)
+  cena1 <- odlocitev_cena(tab, cena)
+  cena1 <- log(cena1)
+  SinR <- prepoznavalnik_SinR(tab, cena1, velikost_oken = 10)
+  tmp <- vstop_SinR(tab, cena1, toleranca, SinR)
+  tab$entry <- tmp$entry
+  tab$linija <- tmp$linija
+  tab$koliko_casa <- tmp$koliko_casa
+  tab$spr_tedenski_N <- spr_tedenski_N(tab)
+  tab$izstop <- win_izstop_SinR(tab, cena1, rr, toleranca, SinR)
+  pomoc <- which(win_izstop_SinR(tab, cena1, rr, toleranca, SinR) > 0)
+  tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1
+  tab <- tab[tab$spr_tedenski_N > 0,]
+  tab
+}
+
+#tabela <- btc_1day
+#cena <- "Close"
+dobicki_trgovanje <- function(tabela, dnevi_N = 20, obdobje = 1800, zacetni_kapital = 1000000, 
+                              cena = "Close", add = 1/2, sl = 2, toleranca = 0.02, rr = 3){
+  tab <- poracuni(tabela, dnevi_N, cena, toleranca, rr)
+  dobicki <- c()
+  for(i in 1:(nrow(tab) - obdobje + 1)){
+    tmp <- tab[i:(obdobje + i - 1),]
+    cena2 <- odlocitev_cena(tmp, cena)
+    i_izstop <- (i-1)
+    dobicki <- c(dobicki, trgovanje(tmp, zacetni_kapital, cena2, add, sl))
+  }
+  dobicki
+}
+
+SinR_dobicki_btc_360 <- dobicki_trgovanje(btc_1day, obdobje = 360)
+SinR_dobicki_btc_500 <- dobicki_trgovanje(btc_1day, obdobje = 500)
+SinR_dobicki_btc_1000 <- dobicki_trgovanje(btc_1day, obdobje = 1000)
+SinR_dobicki_btc_1800 <- dobicki_trgovanje(btc_1day)
+
+SinR_dobicki_btc_360 <- SinR_dobicki_btc_360/1000
+SinR_dobicki_btc_500 <- SinR_dobicki_btc_500/1000
+SinR_dobicki_btc_1000 <- SinR_dobicki_btc_1000/1000
+SinR_dobicki_btc_1800 <- SinR_dobicki_btc_1800/1000
+
+# dobički v času
+grid.arrange(dobicki_v_casu(SinR_dobicki_btc_360, 360), dobicki_v_casu(SinR_dobicki_btc_500, 500), 
+             dobicki_v_casu(SinR_dobicki_btc_1000, 1000), dobicki_v_casu(SinR_dobicki_btc_1800, 1800),
+             nrow = 2, ncol = 2)
+
+grid.arrange(dobicki_v_casu(SinR_dobicki_btc_360[500:length(SinR_dobicki_btc_360)], 360, 500),
+             dobicki_v_casu(SinR_dobicki_btc_500[500:length(SinR_dobicki_btc_500)], 500, 500),
+             dobicki_v_casu(SinR_dobicki_btc_1000[500:length(SinR_dobicki_btc_1000)], 1000, 500),
+             dobicki_v_casu(SinR_dobicki_btc_1800[500:length(SinR_dobicki_btc_1800)], 1800, 500),
+             nrow = 2, ncol = 2)
+
+
+
+SinR_pregled_btc <- pregled_trgovanje(SinR_dobicki_btc_360, SinR_dobicki_btc_500, SinR_dobicki_btc_1000, 
+                                      SinR_dobicki_btc_1800)
+
+
+flextabela_pregled(SinR_pregled_btc, 0)
+
+
+# pred/po letu 2014
+SinR_pred_po_2014 <- pred_po_2014(SinR_dobicki_btc_360, SinR_dobicki_btc_500, SinR_dobicki_btc_1000, 
+                                  SinR_dobicki_btc_1800, 700)
+flextabela_pregled(SinR_pred_po_2014, 0)
+
+SinR_sd_pred_po_2014 <- sd_pred_po_2014(SinR_dobicki_btc_360, SinR_dobicki_btc_500, SinR_dobicki_btc_1000, 
+                                        SinR_dobicki_btc_1800, 700)
+flextabela_pregled(SinR_sd_pred_po_2014, 0)
+
+#########################################################################################################
+# Glajenje r&s
+
+# # SIT
+# y <- btc_1day$Close
+# n = length(y)
+# t = 1:n
+# 
+# library(sm)
+# #cv = cross-validation
+# h = h.select(t, y, method = 'cv')
+# temp = sm.regression(t, y, h=h, display = 'none')
+# mhat = approx(temp$eval.points, temp$estimate, t, method='linear')$y
+# 
+# temp = diff(sign(diff(mhat)))
+# loc = which( temp != 0 ) + 1
+# loc.dir = -sign(temp[(loc - 1)])
+# 
+# temp = c( y[1], y, y[n] )
+# temp = cbind(temp[loc], temp[(loc + 1)], temp[(loc + 2)])
+# max.index = loc + apply(temp, 1, which.max) - 2
+# min.index = loc + apply(temp, 1, which.min) - 2
+# data.loc = ifelse(loc.dir > 0, max.index, min.index)
+# data.loc = ifelse(data.loc < 1, 1, ifelse(data.loc > n, n, data.loc))
+# 
+# plot(btc_1day$Timestamp, btc_1day$Close, type = "l")
+# points(x = btc_1day$Timestamp[data.loc], btc_1day$Close[data.loc], col = "red")
+
+
+
+# Rpatrec_package
+library(rpatrec)
+a <- kernel(btc_1day$Close[1:100], 1)
+plot(btc_1day$Timestamp[1:100], btc_1day$Close[1:100], type = "l")
+lines(btc_1day$Timestamp[1:100], a[1:100], col="blue")
+
+prepoznavalnik <- function(jedro){
+  library(Ckmeans.1d.dp)
+  #clustering
+  mera <- c()
+  for(i in 10:80){
+    fit <- kmeans(jedro, i)
+    mera <- c(mera, fit$tot.withinss)
+  }
+  st_skupin <- 9 + which.min(mera)
+  tmp <- Ckmeans.1d.dp(a, st_skupin)
+  linije <- tmp$centers
+  list("linije" = linije, "odmiki_p" = tmp$tot.withinss, "moc" = tmp$size)
+}
+
+SinR <- prepoznavalnik(a)
+linije <- data.frame("podpore" = SinR$linije, "moc" = SinR$moc)
+
+
+a <- log(kernel(btc_1day$Close, 1))
+proba <- prepoznavalnik()
+ts.plot(log(btc_1day$Close)[1:100])
+lines(x = 1:100, y = rep(proba$podpore[1],100), col = "black")
+lines(x = 1:100, y = rep(proba$podpore[2],100), col = "black")
+lines(x = 1:100, y = rep(proba$podpore[3],100), col = "black")
+lines(x = 1:100, y = rep(proba$podpore[4],100), col = "black")
+lines(x = 1:100, y = rep(proba$podpore[5],100), col = "black")
+lines(x = 1:100, y = rep(proba$podpore[6],100), col = "black")
+
+plot(btc_1day$Timestamp[1:100], a[1:100], col="blue", type = "l")
+lines(btc_1day$Timestamp[1:100], y = rep(proba$podpore[1],100), col = "black")
+lines(btc_1day$Timestamp[1:100], y = rep(proba$podpore[2],100), col = "black")
+lines(btc_1day$Timestamp[1:100], y = rep(proba$podpore[3],100), col = "black")
+lines(btc_1day$Timestamp[1:100], y = rep(proba$podpore[4],100), col = "black")
+lines(btc_1day$Timestamp[1:100], y = rep(proba$podpore[5],100), col = "black")
+
+#####################################################################################
+
+vstop_SinR <- function(tabela, cena, toleranca, crte){
+  
+  linije <- crte$linije
+  entry <- rep(0, nrow(tabela))
+  linija <- rep(0, nrow(tabela))
+  koliko_casa <- rep(0, nrow(tabela))
+  
+  for(i in 2:nrow(tabela)){
+    # obrat podpora
+    opazovana_podpora <- linije[which.min(abs(cena[i,]-linije))]
+    kje_se_dotika_te_podpore <- which(abs(cena - opazovana_podpora) <= toleranca)
+    if(is.na(kje_se_dotika_te_podpore[10])){kje_se_dotika_te_podpore[10] <- Inf}
+    if((abs(cena[i,] - opazovana_podpora) <= toleranca) & (kje_se_dotika_te_podpore[10] < i) & 
+       (cena[i - 1,] > cena[i,]) & (cena[i + 1,] > cena[i,])){
+      entry[i + 1] <- 1
+      linija[i + 1] <- 1
+      koliko_casa[i + 1] <- 1
+    }
+    
+    # obrat odpor
+    opazovani_odpor <- linije[which.min(abs(cena[i,]-linije))]
+    kje_se_dotika_tega_odpora <- which(abs(cena - opazovani_odpor) <= toleranca)
+    if(is.na(kje_se_dotika_tega_odpora[10])){kje_se_dotika_tega_odpora[10] <- Inf}
+    if((abs(cena[i,] - opazovani_odpor) <= toleranca) & (kje_se_dotika_tega_odpora[10] < i) & 
+       (cena[i - 1,] < cena[i,]) & (cena[i + 1,] < cena[i,])){
+      entry[i + 1] <- 2
+      linija[i + 1] <- 2
+      koliko_casa[i + 1] <- 2
+    }
+    
+    # preboj podpora
+    podpore_vmes <- podpore[cena[i-1,] > podpore &  cena[i,] < podpore]
+    if(length(podpore_vmes) > 0){
+      opazovana_podpora <- podpore_vmes[length(podpore_vmes)]
+      kje_se_dotika_te_podpore <- which(abs(cena - opazovana_podpora) <= toleranca)
+      if(is.na(kje_se_dotika_te_podpore[10])){kje_se_dotika_te_podpore[10] <- Inf}
+    }
+    if((length(podpore_vmes) > 0) & (cena[i-1,] > cena[i,]) & (cena[i+1,] < cena[i,]) & 
+       (kje_se_dotika_te_podpore[10] < i)){
+      if((cena[i + 1, ] > opazovana_podpora - toleranca)){
+        if(cena[i + 2, ] < opazovana_podpora - toleranca){
+          entry[i + 2] <- 2
+          linija[i + 2] <- 1
+          koliko_casa[i + 2] <- 2
+        }
+        else{
+          if(cena[i + 2, ] < opazovana_podpora){
+            entry[i + 2] <- 1
+            linija[i + 2] <- 1
+            koliko_casa[i + 2] <- 2}
+        }
+      }
+      else{
+        entry[i + 1] <- 2
+        linija[i + 1] <- 1
+        koliko_casa[i + 1] <- 1}
+    }
+    
+    # preboj odpor
+    odpori_vmes <- odpori[cena[i-1,] < odpori &  cena[i,] > odpori]
+    if(length(odpori_vmes) > 0){
+      opazovani_odpor <- odpori_vmes[length(odpori_vmes)]
+      kje_se_dotika_tega_odpora <- which(abs(cena - opazovani_odpor) <= toleranca)
+      if(is.na(kje_se_dotika_tega_odpora[10])){kje_se_dotika_tega_odpora[10] <- Inf}
+    }
+    if((length(odpori_vmes) > 0) & (cena[i-1,] < cena[i,]) & (cena[i+1,] > cena[i,]) &
+       (kje_se_dotika_tega_odpora[10] < i)){
+      if((cena[i + 1, ] < opazovani_odpor + toleranca)){
+        if(cena[i + 2, ] > opazovani_odpor + toleranca){
+          entry[i + 2] <- 1
+          linija[i + 2] <- 2
+          koliko_casa[i + 2] <- 2
+        }
+        else{
+          if(cena[i + 2, ] > opazovani_odpor){
+            entry[i + 2] <- 2
+            linija[i + 2] <- 2
+            koliko_casa[i + 2] <- 2}
+        }
+      }
+      else{
+        entry[i + 1] <- 1
+        linija[i + 1] <- 2
+        koliko_casa[i + 1] <- 1}
+    }
+  }
+  list("entry" = entry, "linija" = linija, "koliko_casa" = koliko_casa)
+}
+
+# Izstopanje iz zmagovalne pozicije
+# rr = risk/reward ... npr. če se odločimo za 1:3 je rr = 3
+win_izstop_SinR <- function(tabela, cena, rr, toleranca, crte){
+  linije <- crte$linije
+  izstop <- rep(0, nrow(tabela))
+  for(i in 1:nrow(tabela)){
+    if(tabela$entry[i] == 1 & tabela$linija[i] == 1){
+      izstop[i] <- which(tab$linija == 2)[which(tab$linija == 2) > i][1]
+    }
+    if(tabela$entry[i] == 2 & tabela$linija[i] == 2){
+      which(tab$linija == 1)[which(tab$linija == 1) > i][1]
+    }
+    if(tabela$entry[i] == 2 & tabela$linija[i] == 1){
+      cilj <- cena[i,]- sl*rr*tabela$spr_tedenski_N[i]
+      kandidati_cilj <- which(cena - cilj <= toleranca)
+      izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
+    }
+    if(tabela$entry[i] == 1 & tabela$linija[i] == 2){
+      cilj <- cena[i,] + sl*rr*tabela$spr_tedenski_N[i]
+      kandidati_cilj <- which(cena - cilj <= toleranca)
+      izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
+    }
+  }
+  izstop
+}
+
+poracuni <- function(tabela, dnevi_N, cena, toleranca, rr){
+  library(rpatrec)
+  tabela <- tabela[-nrow(tabela),]
+  tab <- spr_N(tabela, dnevi_N)
+  cena1 <- odlocitev_cena(tab, cena)
+  cena1 <- log(cena1)
+  a <- kernel(cena1[,1], 1)
+  SinR <- prepoznavalnik(a)
+  tmp <- vstop_SinR(tab, cena1, toleranca, SinR)
+  tab$entry <- tmp$entry
+  tab$linija <- tmp$linija
+  tab$koliko_casa <- tmp$koliko_casa
+  tab$spr_tedenski_N <- spr_tedenski_N(tab)
+  tab$izstop <- win_izstop_SinR(tab, cena1, rr, toleranca, SinR)
+  pomoc <- which(win_izstop_SinR(tab, cena1, rr, toleranca, SinR) > 0)
+  tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1
+  tab <- tab[tab$spr_tedenski_N > 0,]
+  tab
+}
+
+proba1 <- dobicki_trgovanje(btc_1day, obdobje = 360)
+proba2 <- dobicki_trgovanje(btc_1day, obdobje = 500)
+proba3 <- dobicki_trgovanje(btc_1day, obdobje = 1000)
+proba4 <- dobicki_trgovanje(btc_1day)
+
+proba1 <- proba1/1000
+proba2 <- proba2/1000
+proba3 <- proba3/1000
+proba4 <- proba4/1000
+
+proba <- pregled_trgovanje(proba1, proba2, proba3, proba4)
+library(flextable)
+flextabela_pregled(proba, 0)
 
 
 

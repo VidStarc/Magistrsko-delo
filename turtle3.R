@@ -97,13 +97,10 @@ turtle_s1_spx <- function(tabela, zacetni_kapital, izstop_s1, cena, add, sl){
     st_btc <- unit(money, tabela$spr_tedenski_N[vstop])/cena_vstop
     
     if(tabela$entry_s1[vstop]==1 | tabela$entry_s2[vstop]==1){
-      #izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "long", izstop_s1, cena)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "long", izstop_s1, cena))
       izstop <- ifelse(is.na(kdaj_izstop_long[kdaj_izstop_long > vstop][1]), nrow(tabela), kdaj_izstop_long[kdaj_izstop_long > vstop][1])
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop - 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       cena_ko_dodamo <- cena_vstop
       st_btc_dodamo <- st_btc
@@ -141,13 +138,10 @@ turtle_s1_spx <- function(tabela, zacetni_kapital, izstop_s1, cena, add, sl){
       }
     }
     else{
-      #izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "short", izstop_s1, cena)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "short", izstop_s1, cena))
       izstop <- ifelse(is.na(kdaj_izstop_short[kdaj_izstop_short > vstop][1]), nrow(tabela), kdaj_izstop_short[kdaj_izstop_short > vstop][1])
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop + 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       cena_ko_dodamo <- cena_vstop
       st_btc_dodamo <- st_btc
@@ -249,13 +243,10 @@ turtle_s2_spx <- function(tabela, zacetni_kapital, izstop_s2, cena, add, sl){
     st_btc <- unit(money, tabela$spr_tedenski_N[vstop])/cena_vstop
     
     if(tabela$entry_s2[vstop]==1){
-      #izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "long", izstop_s2, cena)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "long", izstop_s2, cena))
       izstop <- ifelse(is.na(kdaj_izstop_long[kdaj_izstop_long > vstop][1]), nrow(tabela), kdaj_izstop_long[kdaj_izstop_long > vstop][1])
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop - 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       cena_ko_dodamo <- cena_vstop
       st_btc_dodamo <- st_btc
@@ -293,13 +284,10 @@ turtle_s2_spx <- function(tabela, zacetni_kapital, izstop_s2, cena, add, sl){
       }
     }
     else{
-      #izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "short", izstop_s2, cena)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "short", izstop_s2, cena))
       izstop <- ifelse(is.na(kdaj_izstop_short[kdaj_izstop_short > vstop][1]), nrow(tabela), kdaj_izstop_short[kdaj_izstop_short > vstop][1])
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop + 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       cena_ko_dodamo <- cena_vstop
       st_btc_dodamo <- st_btc

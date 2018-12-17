@@ -105,9 +105,7 @@ spr_turtle_s1 <- function(tabela, zacetni_kapital, izstop_s1, cena, add, sl){
       izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "long", izstop_s1, cena)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "long", izstop_s1, cena))
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop - 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       kdaj_dodali_enote <- c()
       cena_ko_dodamo <- cena_vstop
@@ -147,9 +145,7 @@ spr_turtle_s1 <- function(tabela, zacetni_kapital, izstop_s1, cena, add, sl){
       izstop <- ifelse(is.na(spr_win_izstop_s1(tabela, vstop, "short", izstop_s1, cena)), nrow(tabela), spr_win_izstop_s1(tabela, vstop, "short", izstop_s1, cena))
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop + 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       kdaj_dodali_enote <- c()
       cena_ko_dodamo <- cena_vstop
@@ -235,9 +231,7 @@ spr_turtle_s2 <- function(tabela, zacetni_kapital, izstop_s2, cena, add, sl){
       izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "long", izstop_s2, cena)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "long", izstop_s2, cena))
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop - 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       kdaj_dodali_enote <- c()
       cena_ko_dodamo <- cena_vstop
@@ -277,9 +271,7 @@ spr_turtle_s2 <- function(tabela, zacetni_kapital, izstop_s2, cena, add, sl){
       izstop <- ifelse(is.na(spr_win_izstop_s2(tabela, vstop, "short", izstop_s2, cena)), nrow(tabela), spr_win_izstop_s2(tabela, vstop, "short", izstop_s2, cena))
       cena_izstop <- cena[izstop,]
       st_enot <- 1
-      #stop_loss <- cena_vstop + 2*tabela$spr_tedenski_N[vstop]
       stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
-      #pol_N <- (1/2)*tabela$spr_tedenski_N[vstop]
       pol_N <- add*tabela$spr_tedenski_N[vstop]
       kdaj_dodali_enote <- c()
       cena_ko_dodamo <- cena_vstop
@@ -565,9 +557,6 @@ spr <- function(tabela, name){
   if(name == "zk"){tmp <- cbind("zk" = rownames(tabela), tabela)}
   if(name == "cena"){tmp <- cbind("cena" = rownames(tabela), tabela)}
   if(name == "add_sl"){tmp <- cbind("dod/stop_loss" = rownames(tabela), tabela)}
-  #ifelse(name == "vi", tmp <- cbind("vstop/izstop" = rownames(tabela), tabela), 
-  #       ifelse(name == "N", tmp <- cbind("N" = rownames(tabela), tabela), 
-  #              ifelse(name == "cena", tmp <- cbind("cena" = rownames(tabela), tabela), tmp <- cbind("zk" = rownames(tabela), tabela))))
   tmp
 }
 
@@ -676,10 +665,10 @@ flextabela_pregled(pregled_cagr(novi_pregled_btc_S2, strategija = "S2"), 3)
 
 
 novi_pred_po_2014 <- pred_po_2014(novi_btc_dobicki_360_S1, novi_btc_dobicki_500_S1, 
-                                  novi_btc_dobicki_1000_S1, novi_btc_dobicki_1800_S1)
+                                  novi_btc_dobicki_1000_S1, novi_btc_dobicki_1800_S1, 700)
 flextabela_pregled(novi_pred_po_2014, 0)
 
 
 novi_sd_pred_po_2014 <- sd_pred_po_2014(novi_btc_dobicki_360_S1, novi_btc_dobicki_500_S1, 
-                                        novi_btc_dobicki_1000_S1, novi_btc_dobicki_1800_S1)
+                                        novi_btc_dobicki_1000_S1, novi_btc_dobicki_1800_S1, 700)
 flextabela_pregled(novi_sd_pred_po_2014, 1)
