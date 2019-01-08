@@ -265,6 +265,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
         pol_N <- add*tabela$spr_tedenski_N[vstop]
         cena_ko_dodamo <- cena_vstop
         st_btc_dodamo <- st_btc
+        if((vstop+1) <= (izstop-1)){
         for(i in (vstop+1):(izstop-1)){
           vstop <- i
           if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
@@ -296,7 +297,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
               profit1 <- c(profit1, profit)
               break}
           }
-        }
+        }}
       }
       else{
         # obrat na odporu
@@ -309,6 +310,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
           pol_N <- add*tabela$spr_tedenski_N[vstop]
           cena_ko_dodamo <- cena_vstop
           st_btc_dodamo <- st_btc
+          if((vstop+1) <= (izstop-1)){
           for(i in (vstop+1):(izstop-1)){
             vstop <- i
             if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
@@ -331,16 +333,16 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
               }
             }
             else{
-              if(cena[i,] <= stop_loss){
+              if(cena[i,] >= stop_loss){
                 vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
                 kdaj_profit <- c(kdaj_profit, i)
                 for(j in 1:length(st_btc_dodamo)){
-                  profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+                  profit <- profit + (cena_ko_dodamo[j] - cena[i,])*st_btc_dodamo[j]
                 }
                 profit1 <- c(profit1, profit)
                 break}
             }
-          }
+          }}
         }
         else{
           # preboj pri podpori
@@ -353,6 +355,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
             pol_N <- add*tabela$spr_tedenski_N[vstop]
             cena_ko_dodamo <- cena_vstop
             st_btc_dodamo <- st_btc
+            if((vstop+1) <= (izstop-1)){
             for(i in (vstop+1):(izstop-1)){
               vstop <- i
               if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
@@ -375,16 +378,16 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
                 }
               }
               else{
-                if(cena[i,] <= stop_loss){
+                if(cena[i,] >= stop_loss){
                   vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
                   kdaj_profit <- c(kdaj_profit, i)
                   for(j in 1:length(st_btc_dodamo)){
-                    profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+                    profit <- profit + (cena_ko_dodamo[j] - cena[i,])*st_btc_dodamo[j]
                   }
                   profit1 <- c(profit1, profit)
                   break}
               }
-            }
+            }}
           }
           else{
             # preboj pri odporu
@@ -397,6 +400,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
               pol_N <- add*tabela$spr_tedenski_N[vstop]
               cena_ko_dodamo <- cena_vstop
               st_btc_dodamo <- st_btc
+              if((vstop+1) <= (izstop-1)){
               for(i in (vstop+1):(izstop-1)){
                 vstop <- i
                 if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
@@ -428,7 +432,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
                     profit1 <- c(profit1, profit)
                     break}
                 }
-              }
+              }}
             }
           }}}
       if(vstop == (izstop-1)){
@@ -571,7 +575,7 @@ prepoznavalnik <- function(jedro){
     mera <- c(mera, fit$tot.withinss)
   }
   st_skupin <- 9 + which.min(mera)
-  tmp <- Ckmeans.1d.dp(a, st_skupin)
+  tmp <- Ckmeans.1d.dp(jedro, st_skupin)
   linije <- tmp$centers
   list("linije" = linije, "odmiki_p" = tmp$tot.withinss, "moc" = tmp$size)
 }

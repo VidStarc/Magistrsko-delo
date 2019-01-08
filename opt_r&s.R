@@ -62,6 +62,7 @@ spr <- function(tabela, name){
 }
 
 library(officer)
+library(flextable)
 flextabela_matrika(spr(SinRtoleranca_2, "tol"), "nc")
 
 flextabela_matrika(spr(cagr(SinRdobicki_rr), "rr"), "cagr")

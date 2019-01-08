@@ -354,12 +354,18 @@ odlocitev_cena <- function(tabela, cena){
 }
 
 izracun_za_analizo <- function(tabela, dnevi_N, vstop_s1, vstop_s2, cena){
+  library(QuantTools)
   tabela <- tabela[-nrow(tabela),]
   tab <- spr_N(tabela, dnevi_N)
   cena1 <- odlocitev_cena(tab, cena)
+  # za N/SMA:
+  #tab$sma <- sma(cena1[,1], dnevi_N)
+  #tab$sma[is.na(tab$sma)] <- rep(1, length(tab$sma[is.na(tab$sma)]))
+  ##
   tab$entry_s1 <- spr_entry_s1(tab, vstop_s1, cena1)
   tab$entry_s2 <- spr_entry_s2(tab, vstop_s2, cena1)
   tab$spr_tedenski_N <- spr_tedenski_N(tab)
+  tab$spr_tedenski_N[is.na(tab$spr_tedenski_N)] <- rep(0, length(tab$spr_tedenski_N[is.na(tab$spr_tedenski_N)]))
   tab <- tab[tab$spr_tedenski_N > 0,]
   tab
 }
