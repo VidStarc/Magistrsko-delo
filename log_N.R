@@ -1,5 +1,5 @@
 
-chaikinVolatility
+?chaikinVolatility
 
 spr_N <- function(tabela, metoda){
   library(TTR)
@@ -246,6 +246,19 @@ flextabela_pregled(TR_sd_pred_po_2014, 1)
 # PREGLED #
 ###########
 
+pred_po_2014 <- function(l1, l2, l3, l4, predpo2014){
+  pred_2014 <- c(mean(l1[1:predpo2014]*1000), mean(l2[1:predpo2014]*1000), mean(l3[1:predpo2014]*1000), mean(l4[1:predpo2014]*1000))
+  cagr_pred_2014 <- c(cagr(pred_2014[1], obdobje = 360), cagr(pred_2014[2], obdobje = 360), 
+                      cagr(pred_2014[3], obdobje = 360), cagr(pred_2014[4], obdobje = 360))
+  po_2014 <- c(mean(l1[(predpo2014+1):length(l1)]*1000), mean(l2[(predpo2014+1):length(l2)]*1000), mean(l3[(predpo2014+1):length(l3)]*1000), 
+               mean(l4[(predpo2014+1):length(l4)]*1000))
+  cagr_po_2014 <- c(cagr(po_2014[1], obdobje = 360), cagr(po_2014[2], obdobje = 360), 
+                    cagr(po_2014[3], obdobje = 360), cagr(po_2014[4], obdobje = 360))
+  data.frame("sistem_obdobje" = c("S1, 360", "S1, 360", "S1, 360", "S1, 360"), 
+             "pred_2014" = pred_2014, "po_2014" = po_2014, 
+             "lsd_pred_2014" = paste0(cagr_pred_2014, " %"), 
+             "lsd_po_2014" = paste0(cagr_po_2014, " %"))
+}
 pregled_razlicen_N <- pred_po_2014(dobicki_Nsma_360, dobicki_TR_360, dobicki_Nclose_360, dobicki_Ngk_360, 700)
 pregled_razlicen_n <- pred_po_2014(dobicki_Npar_360, dobicki_Nrs_360, dobicki_Ngkyz_360, dobicki_Nyz_360, 700)
 

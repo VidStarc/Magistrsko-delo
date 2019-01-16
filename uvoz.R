@@ -8,17 +8,21 @@ pretvori <- function(coin, enota, minute){
   ind <- which(del == round(del))
   high <- c()
   low <- c()
+  volume <- c()
   for(i in 1:length(ind)){
     tmp <- coin$High[ind[i]:(ind[i]+minute-1)]
     tmp1 <- coin$Low[ind[i]:(ind[i]+minute-1)]
     high <- append(high, max(tmp))
     low <- append(low, min(tmp1))
+    tmp2 <- coin$Volume_.Currency.[ind[i]:(ind[i]+minute-1)]
+    volume <- append(volume, sum(tmp2))
   }
   data.frame(Timestamp = coin$Timestamp[ind],
              Open = coin$Open[ind],
              High = high,
              Low = low,
-             Close = coin$Close[(ind+minute-1)])
+             Close = coin$Close[(ind+minute-1)],
+             Volume = volume)
 }
 
 #funkcija za 5minutne podatke
@@ -61,6 +65,8 @@ save(btc_1h, file = "databtc_1h.Rda")
 
 btc_1day <- pretvori(btc_min, 86400, 60*24)
 save(btc_1day, file = "databtc_1day.Rda")
+
+btc_1day_vol <- pretvori(btc_min, 86400, 60*24)
 
 ##########
 #ETHEREUM#

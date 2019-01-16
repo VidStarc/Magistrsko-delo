@@ -1,3 +1,9 @@
+cagr <- function(tabela, zacetni_kapital = 1000000, obdobje = 1800){
+  tabela <- round(((tabela/zacetni_kapital+1)^(365/obdobje)-1)*100,3)
+  tabela
+}
+
+
 # pregled dobičkov
 pregled_trgovanje <- function(l1, l2, l3, l4){
   l1 <- l1*1000
@@ -52,8 +58,8 @@ pred_po_2014 <- function(l1, l2, l3, l4, predpo2014){
                     cagr(po_2014[3], obdobje = 1000), cagr(po_2014[4]))
   data.frame("obdobje" = c("360", "500", "1000", "1800"), 
              "pred_2014" = pred_2014, "po_2014" = po_2014, 
-             "psd_pred_2014" = paste0(cagr_pred_2014, " %"), 
-             "psd_po_2014" = paste0(cagr_po_2014, " %"))
+             "lsd_pred_2014" = paste0(cagr_pred_2014, " %"), 
+             "lsd_po_2014" = paste0(cagr_po_2014, " %"))
 }
 
 sd_pred_po_2014 <- function(l1, l2, l3, l4, predpo2014){

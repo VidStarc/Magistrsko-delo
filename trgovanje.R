@@ -165,7 +165,10 @@ odlocitev_cena <- function(tabela, cena){
   cena1
 }
 
+tabela <- btc_1day
+
 poracuni <- function(tabela, dnevi_N, cena, dnevi_ema1, dnevi_ema2, toleranca, rr, indikator){
+  library(QuantTools)
   tabela <- tabela[-nrow(tabela),]
   tab <- spr_N(tabela, dnevi_N)
   cena1 <- odlocitev_cena(tab, cena)
@@ -173,25 +176,41 @@ poracuni <- function(tabela, dnevi_N, cena, dnevi_ema1, dnevi_ema2, toleranca, r
     tab$ma1 <- ema(cena1[,1], dnevi_ema1)
     tab$ma2 <- ema(cena1[,1], dnevi_ema2)
     tab$entry <- vstop_MA(tab, cena1)
-    tab$spr_tedenski_N <- spr_tedenski_N(tab)
-    tab$izstop <- win_izstop_MA(tab, cena1, toleranca, rr)
-    pomoc <- which(win_izstop_MA(tab, cena1, toleranca, rr) > 0)
-    tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1   #to velja samo za btc_1day
   }
   if(indikator == "MA1"){
     tab$ma1 <- sma(cena1[,1], dnevi_ema1)
     tab$ma2 <- sma(cena1[,1], dnevi_ema2)
     tab$entry <- vstop_MA(tab, cena1)
-    tab$spr_tedenski_N <- spr_tedenski_N(tab)
-    tab$izstop <- win_izstop_MA(tab, cena1, toleranca, rr)
-    pomoc <- which(win_izstop_MA(tab, cena1, toleranca, rr) > 0)
-    tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1   #to velja samo za btc_1day
   }
+  if(indikator == "adx"){
+    tab$entry <- vstop_ADX(tab)
+  }
+  if(indikator == "vi"){
+    tab$entry <- vstop_VI(tab)
+  }
+  if(indikator == "rsi"){
+    tab$entry <- vstop_RSI(tab)
+  }
+  if(indikator == "roc"){
+    tab$ma <- sma(cena1[,1], 20)
+    tab$ma[is.na(tab$ma)] <- 0
+    tab$entry <- vstop_ROC(tab, cena1)
+  }
+  if(indikator == "so"){
+    tab$entry <- vstop_SO(tab)
+  }
+  if(indikator == "ppo"){
+    tab$entry <- vstop_PPO(tab)
+  }
+  tab$spr_tedenski_N <- spr_tedenski_N(tab)
+  tab$izstop <- win_izstop_MA(tab, cena1, toleranca, rr)
+  pomoc <- which(win_izstop_MA(tab, cena1, toleranca, rr) > 0)
+  tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1   #to velja samo za btc_1day
   tab <- tab[tab$spr_tedenski_N > 0,]
   tab
 }
 
-#tabela <- btc_1day
+
 #cena <- "Close"
 dobicki_trgovanje <- function(tabela, dnevi_N = 20, obdobje = 1800, zacetni_kapital = 1000000, 
                               cena = "Close", add = 1/2, sl = 2, toleranca = 0.02, rr = 3, dnevi_ema1 = 10,
