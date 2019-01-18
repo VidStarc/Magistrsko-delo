@@ -165,44 +165,66 @@ odlocitev_cena <- function(tabela, cena){
   cena1
 }
 
-tabela <- btc_1day
+tabela <- btc_1day_vol
 
 poracuni <- function(tabela, dnevi_N, cena, dnevi_ema1, dnevi_ema2, toleranca, rr, indikator){
   library(QuantTools)
   tabela <- tabela[-nrow(tabela),]
-  tab <- spr_N(tabela, dnevi_N)
-  cena1 <- odlocitev_cena(tab, cena)
   if(indikator == "MA"){
+    tab <- spr_N(tabela, dnevi_N)
+    cena1 <- odlocitev_cena(tab, cena)
     tab$ma1 <- ema(cena1[,1], dnevi_ema1)
     tab$ma2 <- ema(cena1[,1], dnevi_ema2)
     tab$entry <- vstop_MA(tab, cena1)
   }
   if(indikator == "MA1"){
+    tab <- spr_N(tabela, dnevi_N)
+    cena1 <- odlocitev_cena(tab, cena)
     tab$ma1 <- sma(cena1[,1], dnevi_ema1)
     tab$ma2 <- sma(cena1[,1], dnevi_ema2)
     tab$entry <- vstop_MA(tab, cena1)
   }
   if(indikator == "adx"){
+    tab <- N_adx(tabela, dnevi_N)
     tab$entry <- vstop_ADX(tab)
   }
   if(indikator == "vi"){
+    tab <- N_vix(tabela, dnevi_N)
     tab$entry <- vstop_VI(tab)
   }
   if(indikator == "rsi"){
+    tab <- N_rsi(tabela, dnevi_N)
     tab$entry <- vstop_RSI(tab)
   }
   if(indikator == "roc"){
+    tab <- N_roc(tabela, dnevi_N)
+    cena1 <- odlocitev_cena(tab, cena)
     tab$ma <- sma(cena1[,1], 20)
     tab$ma[is.na(tab$ma)] <- 0
     tab$entry <- vstop_ROC(tab, cena1)
   }
   if(indikator == "so"){
+    tab <- N_so(tabela, dnevi_N)
     tab$entry <- vstop_SO(tab)
   }
   if(indikator == "ppo"){
+    tab <- N_ppo(tabela, dnevi_N)
     tab$entry <- vstop_PPO(tab)
   }
+  if(indikator == "fi"){
+    tab <- N_fi(tabela, dnevi_N)
+    tab$entry <- vstop_FI(tab)
+  }
+  if(indikator == "mfi"){
+    tab <- N_mfi(tabela, dnevi_N)
+    tab$entry <- vstop_MFI(tab)
+  }
+  if(indikator == "co"){
+    tab <- N_co(tabela, dnevi_N)
+    tab$entry <- vstop_CO(tab)
+  }
   tab$spr_tedenski_N <- spr_tedenski_N(tab)
+  cena1 <- odlocitev_cena(tab, cena)
   tab$izstop <- win_izstop_MA(tab, cena1, toleranca, rr)
   pomoc <- which(win_izstop_MA(tab, cena1, toleranca, rr) > 0)
   tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1   #to velja samo za btc_1day

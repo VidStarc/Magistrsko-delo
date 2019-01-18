@@ -144,18 +144,11 @@ flextabela_matrika(spr(MAdobicki/MAsd, "ma"), "cagr")
 
 
 
-
-###################
-# Bollinger bands #
-###################
-
-
-
 #############################
 # Average Directional index #
 #############################
 
-spr_N <- function(tabela, dnevi){
+N_adx <- function(tabela, dnevi){
   # TR
   tr <- c()
   for(i in 2:nrow(tabela)){
@@ -256,7 +249,7 @@ ADX_dobicki_btc_1800 <- ADX_dobicki_btc_1800/1000
 # Vortex indicator #
 ####################
 
-spr_N <- function(tabela, dnevi){
+N_vix <- function(tabela, dnevi){
   # TR
   tr <- c()
   for(i in 2:nrow(tabela)){
@@ -336,7 +329,7 @@ VIX_dobicki_btc_1800 <- VIX_dobicki_btc_1800/1000
 # Relative strength index #
 ###########################
 
-spr_N <- function(tabela, dnevi){
+N_rsi <- function(tabela, dnevi){
   # TR
   tr <- c()
   for(i in 2:nrow(tabela)){
@@ -424,7 +417,7 @@ RSI_dobicki_btc_1800 <- RSI_dobicki_btc_1800/1000
 # Rate of Change #
 ##################
 
-spr_N <- function(tabela, dnevi){
+N_roc <- function(tabela, dnevi){
   # TR
   tr <- c()
   for(i in 2:nrow(tabela)){
@@ -498,7 +491,7 @@ ROC_dobicki_btc_1800 <- ROC_dobicki_btc_1800/1000
 # Stochastic Oscillator #
 #########################
 
-spr_N <- function(tabela, dnevi){
+N_so <- function(tabela, dnevi){
   # TR
   tr <- c()
   for(i in 2:nrow(tabela)){
@@ -553,7 +546,7 @@ vstop_SO <- function(tabela){
   entry
 }
 
-SO_dobicki_btc_360 <- dobicki_trgovanje(btc_1day, obdobje = 360, indikator = "so")
+SO1_dobicki_btc_360 <- dobicki_trgovanje(btc_1day, obdobje = 360, indikator = "so")
 SO_dobicki_btc_500 <- dobicki_trgovanje(btc_1day, obdobje = 500, indikator = "so")
 SO_dobicki_btc_1000 <- dobicki_trgovanje(btc_1day, obdobje = 1000, indikator = "so")
 SO_dobicki_btc_1800 <- dobicki_trgovanje(btc_1day, obdobje = 1800, indikator = "so")
@@ -568,7 +561,7 @@ SO_dobicki_btc_1800 <- SO_dobicki_btc_1800/1000
 # Percentage Price Oscillator #
 ###############################
 
-spr_N <- function(tabela, dnevi){
+N_ppo <- function(tabela, dnevi){
   # TR
   tr <- c()
   for(i in 2:nrow(tabela)){
@@ -630,3 +623,210 @@ PPO_dobicki_btc_360 <- PPO_dobicki_btc_360/1000
 PPO_dobicki_btc_500 <- PPO_dobicki_btc_500/1000
 PPO_dobicki_btc_1000 <- PPO_dobicki_btc_1000/1000
 PPO_dobicki_btc_1800 <- PPO_dobicki_btc_1800/1000
+
+
+###############
+# Force Index #
+###############
+
+N_fi <- function(tabela, dnevi){
+  # TR
+  tr <- c()
+  for(i in 2:nrow(tabela)){
+    h <- tabela$High[i]
+    l <- tabela$Low[i]
+    pdc <- tabela$Close[i-1]
+    tr <- append(tr, max(h-l, h-pdc, pdc-l))
+  }
+  tabela$TR <- c(0,tr)
+  
+  # Force index
+  tabela$fi1 <- c(0, (tabela$Close[2:nrow(tabela)] - tabela$Close[1:(nrow(tabela)-1)])*tabela$Volume[2:nrow(tabela)])
+  tabela$fi13 <- c(0, ema(tabela$fi1[2:nrow(tabela)], 13))
+  
+  tabela <- tabela[-1,]
+  # N
+  prvi_n <- mean(tabela$TR[1:dnevi])
+  n <- c(rep(0,(dnevi-1)), prvi_n, rep(0, (nrow(tabela)-dnevi)))
+  for(i in (dnevi+1):nrow(tabela)){
+    n[i] <- ((dnevi-1)*n[i-1] + tabela$TR[i])/dnevi
+  }
+  tabela$spr_N <- round(n, 2)
+  
+  tabela
+}
+
+# fi13 < 0, fi13 > 0 -> go long
+# fi13 > 0, fi13 < 0 -> go short
+vstop_FI <- function(tabela){
+  entry <- rep(0, nrow(tabela))
+  for(i in 2:nrow(tabela)){
+    if(!is.na(tabela$fi13[i-1])){
+      if((tabela$fi13[i-1] < 0) & (tabela$fi13[i] > 0)){
+        entry[i] <- 1
+      }
+      if((tabela$fi13[i-1] > 0) & (tabela$fi13[i] < 0)){
+        entry[i] <- 2
+      }
+    }
+  }
+  entry
+}
+
+FI_dobicki_btc_360 <- dobicki_trgovanje(btc_1day_vol, obdobje = 360, indikator = "fi")
+FI_dobicki_btc_500 <- dobicki_trgovanje(btc_1day_vol, obdobje = 500, indikator = "fi")
+FI_dobicki_btc_1000 <- dobicki_trgovanje(btc_1day_vol, obdobje = 1000, indikator = "fi")
+FI_dobicki_btc_1800 <- dobicki_trgovanje(btc_1day_vol, obdobje = 1800, indikator = "fi")
+
+FI_dobicki_btc_360 <- FI_dobicki_btc_360/1000
+FI_dobicki_btc_500 <- FI_dobicki_btc_500/1000
+FI_dobicki_btc_1000 <- FI_dobicki_btc_1000/1000
+FI_dobicki_btc_1800 <- FI_dobicki_btc_1800/1000
+
+
+####################
+# Money Flow Index #
+####################
+
+N_mfi <- function(tabela, dnevi){
+  # TR
+  tr <- c()
+  for(i in 2:nrow(tabela)){
+    h <- tabela$High[i]
+    l <- tabela$Low[i]
+    pdc <- tabela$Close[i-1]
+    tr <- append(tr, max(h-l, h-pdc, pdc-l))
+  }
+  tabela$TR <- c(0,tr)
+  
+  # TP, RMF
+  tabela$tp <- (tabela$High + tabela$Low + tabela$Close)/3
+  tabela$rmf <- tabela$tp*tabela$Volume
+  
+  # pmf, nmf
+  pmf1 <- rep(0, nrow(tabela))
+  nmf1 <- rep(0, nrow(tabela))
+  for(i in 2:nrow(tabela)){
+    ifelse(tabela$tp[i] > tabela$tp[i-1], pmf1[i] <- tabela$rmf[i], 0)
+    ifelse(tabela$tp[i] < tabela$tp[i-1], nmf1[i] <- tabela$rmf[i], 0)
+  }
+  tabela$pmf1 <- pmf1
+  tabela$nmf1 <- nmf1
+  
+  pmf14 <- rep(0, nrow(tabela))
+  nmf14 <- rep(0, nrow(tabela))
+  for(i in 15:nrow(tabela)){
+    pmf14[i] <- sum(tabela$pmf1[(i-13):i])
+    nmf14[i] <- sum(tabela$nmf1[(i-13):i])
+  }
+  tabela$pmf14 <- pmf14
+  tabela$nmf14 <- nmf14
+  
+  # MFR, MFI
+  tabela$mfr <- tabela$pmf14/tabela$nmf14
+  tabela$mfi <- 100-(100/(1+tabela$mfr))
+  
+  tabela <- tabela[-1,]
+  # N
+  prvi_n <- mean(tabela$TR[1:dnevi])
+  n <- c(rep(0,(dnevi-1)), prvi_n, rep(0, (nrow(tabela)-dnevi)))
+  for(i in (dnevi+1):nrow(tabela)){
+    n[i] <- ((dnevi-1)*n[i-1] + tabela$TR[i])/dnevi
+  }
+  tabela$spr_N <- round(n, 2)
+  
+  tabela
+}
+
+# mfi < 10, mfi > 10 -> go long
+# mfi > 90, mfi < 90 -> go short
+vstop_MFI <- function(tabela){
+  entry <- rep(0, nrow(tabela))
+  for(i in 2:nrow(tabela)){
+    if(!is.na(tabela$mfi[i-1])){
+      if((tabela$mfi[i-1] < 20) & (tabela$mfi[i] > 20)){
+        entry[i] <- 1
+      }
+      if((tabela$mfi[i-1] > 80) & (tabela$mfi[i] < 80)){
+        entry[i] <- 2
+      }
+    }
+  }
+  entry
+}
+
+MFI_dobicki_btc_360 <- dobicki_trgovanje(btc_1day_vol, obdobje = 360, indikator = "mfi")
+MFI_dobicki_btc_500 <- dobicki_trgovanje(btc_1day_vol, obdobje = 500, indikator = "mfi")
+MFI_dobicki_btc_1000 <- dobicki_trgovanje(btc_1day_vol, obdobje = 1000, indikator = "mfi")
+MFI_dobicki_btc_1800 <- dobicki_trgovanje(btc_1day_vol, obdobje = 1800, indikator = "mfi")
+
+MFI_dobicki_btc_360 <- MFI_dobicki_btc_360/1000
+MFI_dobicki_btc_500 <- MFI_dobicki_btc_500/1000
+MFI_dobicki_btc_1000 <- MFI_dobicki_btc_1000/1000
+MFI_dobicki_btc_1800 <- MFI_dobicki_btc_1800/1000
+
+
+######################
+# Chaikin Oscillator #
+######################
+
+N_co <- function(tabela, dnevi){
+  # TR
+  tr <- c()
+  for(i in 2:nrow(tabela)){
+    h <- tabela$High[i]
+    l <- tabela$Low[i]
+    pdc <- tabela$Close[i-1]
+    tr <- append(tr, max(h-l, h-pdc, pdc-l))
+  }
+  tabela$TR <- c(0,tr)
+  
+  # mfm, mfv, adl
+  tabela$mfm <- ((tabela$Close - tabela$Low) - (tabela$High - tabela$Close))/(tabela$High - tabela$Low)
+  tabela$mfm[is.na(tabela$mfm)] <- 0
+  tabela$mfv <- tabela$mfm*tabela$Volume
+  tabela$adl <- c(tabela$mfv[1], (tabela$mfv[2:nrow(tabela)] + tabela$mfv[1:(nrow(tabela)-1)]))
+  
+  # 3-day, 10-day EMA
+  tabela$ema3adl <- ema(tabela$adl, 3)
+  tabela$ema10adl <- ema(tabela$adl, 10)
+  tabela$CO <- tabela$ema3adl - tabela$ema10adl
+  
+  tabela <- tabela[-1,]
+  # N
+  prvi_n <- mean(tabela$TR[1:dnevi])
+  n <- c(rep(0,(dnevi-1)), prvi_n, rep(0, (nrow(tabela)-dnevi)))
+  for(i in (dnevi+1):nrow(tabela)){
+    n[i] <- ((dnevi-1)*n[i-1] + tabela$TR[i])/dnevi
+  }
+  tabela$spr_N <- round(n, 2)
+  
+  tabela
+}
+
+# CO < 1000, CO > 1000 -> go long
+# CO > -1000, CO < -1000 -> go short
+vstop_CO <- function(tabela){
+  entry <- rep(0, nrow(tabela))
+  for(i in 2:nrow(tabela)){
+    if(!is.na(tabela$CO[i-1])){
+      if((tabela$CO[i-1] < 1000) & (tabela$CO[i] > 1000)){
+        entry[i] <- 1
+      }
+      if((tabela$CO[i-1] > -1000) & (tabela$CO[i] < -1000)){
+        entry[i] <- 2
+      }
+    }
+  }
+  entry
+}
+
+CO_dobicki_btc_360 <- dobicki_trgovanje(btc_1day_vol, obdobje = 360, indikator = "co")
+CO_dobicki_btc_500 <- dobicki_trgovanje(btc_1day_vol, obdobje = 500, indikator = "co")
+CO_dobicki_btc_1000 <- dobicki_trgovanje(btc_1day_vol, obdobje = 1000, indikator = "co")
+CO_dobicki_btc_1800 <- dobicki_trgovanje(btc_1day_vol, obdobje = 1800, indikator = "co")
+
+CO_dobicki_btc_360 <- CO_dobicki_btc_360/1000
+CO_dobicki_btc_500 <- CO_dobicki_btc_500/1000
+CO_dobicki_btc_1000 <- CO_dobicki_btc_1000/1000
+CO_dobicki_btc_1800 <- CO_dobicki_btc_1800/1000
