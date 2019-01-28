@@ -5,30 +5,44 @@
 # lokalne minimume najdemo lahko tudi z drugimi odvodi kernel regression-a (glej kodo npr. na githubu od SIT)
 # lokalni minimumi in maksimumi
 #set.seed(123)
+
+# boljša funkcija:
 lok_ekstremi <- function(tabela, cena, velikost_oken){
+  library(plyr)
   casovna_vrsta <- cena[,1]
   N <- length(casovna_vrsta)
   stp <- velikost_oken
-  st_okvirjev <- floor(N/stp)
-  minz <- array(0.0, dim=st_okvirjev)
-  whichMinz <- array(0, dim=st_okvirjev)
-  maxz <- array(0.0, dim=st_okvirjev)
-  whichMaxz = array(0, dim=st_okvirjev)
-  for(j in 1:(st_okvirjev-1)){
-    lft <- (j-1)*stp + 1  #left and right elements of each chunk
-    rght <- j*stp
-    whichMinz[j] <- which.min(casovna_vrsta[lft:rght]) + lft - 1
-    minz[j] <- min(casovna_vrsta[lft:rght])
-    whichMaxz[j] <- which.max(casovna_vrsta[lft:rght]) + lft - 1
-    maxz[j] <- max(casovna_vrsta[lft:rght])
-  }   
-  #zadnji okvir
-  lft <- j*stp + 1  #left and right elements of each chunk
-  rght <- N
-  whichMinz[st_okvirjev] <- which.min(casovna_vrsta[lft:rght]) + lft - 1
-  minz[st_okvirjev] <- min(casovna_vrsta[lft:rght])
-  whichMaxz[st_okvirjev] <- which.max(casovna_vrsta[lft:rght]) + lft - 1
-  maxz[st_okvirjev] <- max(casovna_vrsta[lft:rght])
+  #st_okvirjev <- floor(N/stp)
+  whichMinz <- c()
+  whichMaxz <- c()
+  st_min <- c()
+  st_max <- c()
+  for(j in 1:(N-stp)){
+    tmp_whichMinz <- which.min(casovna_vrsta[(j+1):(j+stp-2)]) + j
+    pogoj <- (length(whichMinz[whichMinz == tmp_whichMinz]) > 0)
+    if(!pogoj){
+      whichMinz <- c(whichMinz, tmp_whichMinz)
+      st_min <- c(st_min, 1)
+    }
+    else{
+      st_min[length(st_min)] <- st_min[length(st_min)] + 1
+    }
+    
+    tmp_whichMaxz <- which.max(casovna_vrsta[(j+1):(j+stp-2)]) + j
+    pogoj1 <- (length(whichMaxz[whichMaxz == tmp_whichMaxz]) > 0)
+    if(!pogoj1){
+      whichMaxz <- c(whichMaxz, tmp_whichMaxz)
+      st_max <- c(st_max, 1)
+    }
+    else{
+      st_max[length(st_max)] <- st_max[length(st_max)] + 1
+    }
+  }
+  whichMinz <- whichMinz[st_min > 1]
+  whichMaxz <- whichMaxz[st_max > 1]
+  minz <- casovna_vrsta[whichMinz]
+  maxz <- casovna_vrsta[whichMaxz]
+  
   list("kje_min" = whichMinz, "minz" = minz, "kje_max" = whichMaxz, "maxz" = maxz)
 }
 
@@ -147,8 +161,8 @@ vstop_SinR <- function(tabela, cena, toleranca, crte){
   }
   
   # preboj podpore
-  for(i in 2:nrow(tabela)){
-    podpore_vmes <- podpore[cena[i-1,] > podpore &  cena[i,] < podpore]
+  for(i in 2:(nrow(tabela)-2)){
+    podpore_vmes <- podpore[cena[i-1,] > podpore & cena[i,] < podpore]
     if(length(podpore_vmes) > 0){
       opazovana_podpora <- podpore_vmes[length(podpore_vmes)]
       kje_se_dotika_te_podpore <- which(abs(l_min - opazovana_podpora) <= toleranca)
@@ -208,7 +222,7 @@ vstop_SinR <- function(tabela, cena, toleranca, crte){
 
 # Izstopanje iz zmagovalne pozicije
 # rr = risk/reward ... npr. če se odločimo za 1:3 je rr = 3
-win_izstop_SinR <- function(tabela, cena, rr, toleranca, crte){
+win_izstop_SinR <- function(tabela, cena, rr, crte){
   podpore <- crte$podpore
   odpori <- as.numeric(crte$odpori)
   izstop <- rep(0, nrow(tabela))
@@ -223,14 +237,14 @@ win_izstop_SinR <- function(tabela, cena, rr, toleranca, crte){
       #opazovana_podpora <- podpore[which.min(abs(cena[i-koliko_casa[i],]-podpore))]
       #cilj <- opazovana_podpora - sl*rr*tabela$spr_tedenski_N[i]
       cilj <- cena[i,]- sl*rr*tabela$spr_tedenski_N[i]
-      kandidati_cilj <- which(cena - cilj <= toleranca)
+      kandidati_cilj <- which(cena[,1] <= cilj)
       izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
     }
     if(tabela$entry[i] == 1 & tabela$linija[i] == 2){
       #opazovani_odpor <- odpori[which.min(abs(cena[i-koliko_casa[i],]-odpori))]
       #cilj <- opazovani_odpor + sl*rr*tabela$spr_tedenski_N[i]
       cilj <- cena[i,] + sl*rr*tabela$spr_tedenski_N[i]
-      kandidati_cilj <- which(cena - cilj <= toleranca)
+      kandidati_cilj <- which(cena[,1] >= cilj)
       izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
     }
   }
@@ -444,6 +458,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
         kdaj_profit <- c(kdaj_profit, izstop)
         vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
       }
+      #else{profit <- profit}
       #if(profit <= -100000){money <- 0.8*money}
     }
     profit
@@ -458,6 +473,26 @@ odlocitev_cena <- function(tabela, cena){
   cena1
 }
 
+#izračuna True Range in N
+spr_N <- function(tabela, dnevi){
+  tr <- c()
+  for(i in 2:nrow(tabela)){
+    h <- tabela$High[i]
+    l <- tabela$Low[i]
+    pdc <- tabela$Close[i-1]
+    tr <- append(tr, max(h-l, h-pdc, pdc-l))
+  }
+  tabela$TR <- c(0,tr)
+  tabela <- tabela[-1,]
+  prvi_n <- mean(tabela$TR[1:dnevi])
+  n <- c(rep(0,(dnevi-1)), prvi_n, rep(0, (nrow(tabela)-dnevi)))
+  for(i in (dnevi+1):nrow(tabela)){
+    n[i] <- ((dnevi-1)*n[i-1] + tabela$TR[i])/dnevi
+  }
+  tabela$spr_N <- n
+  tabela
+}
+
 poracuni <- function(tabela, dnevi_N, cena, toleranca, rr){
   tabela <- tabela[-nrow(tabela),]
   tab <- spr_N(tabela, dnevi_N)
@@ -469,15 +504,16 @@ poracuni <- function(tabela, dnevi_N, cena, toleranca, rr){
   tab$linija <- tmp$linija
   tab$koliko_casa <- tmp$koliko_casa
   tab$spr_tedenski_N <- spr_tedenski_N(tab)
-  tab$izstop <- win_izstop_SinR(tab, cena1, rr, toleranca, SinR)
-  pomoc <- which(win_izstop_SinR(tab, cena1, rr, toleranca, SinR) > 0)
+  tab$izstop <- win_izstop_SinR(tab, cena1, rr, SinR)
+  pomoc <- which(win_izstop_SinR(tab, cena1, rr, SinR) > 0)
   tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1
   tab <- tab[tab$spr_tedenski_N > 0,]
   tab
 }
 
-#tabela <- btc_1day
-#cena <- "Close"
+
+tabela <- btc_1day
+cena <- "Close"
 dobicki_trgovanje <- function(tabela, dnevi_N = 20, obdobje = 1800, zacetni_kapital = 1000000, 
                               cena = "Close", add = 1/2, sl = 2, toleranca = 0.02, rr = 3){
   tab <- poracuni(tabela, dnevi_N, cena, toleranca, rr)
@@ -513,7 +549,7 @@ grid.arrange(dobicki_v_casu(SinR_dobicki_btc_360[500:length(SinR_dobicki_btc_360
              nrow = 2, ncol = 2)
 
 
-
+# source("TA_pregled.R")
 SinR_pregled_btc <- pregled_trgovanje(SinR_dobicki_btc_360, SinR_dobicki_btc_500, SinR_dobicki_btc_1000, 
                                       SinR_dobicki_btc_1800)
 
@@ -610,7 +646,7 @@ vstop_SinR <- function(tabela, cena, toleranca, crte){
   linija <- rep(0, nrow(tabela))
   koliko_casa <- rep(0, nrow(tabela))
   
-  for(i in 2:nrow(tabela)){
+  for(i in 2:(nrow(tabela)-2)){
     # obrat podpora
     opazovana_podpora <- linije[which.min(abs(cena[i,]-linije))]
     kje_se_dotika_te_podpore <- which(abs(cena - opazovana_podpora) <= toleranca)
@@ -694,24 +730,24 @@ vstop_SinR <- function(tabela, cena, toleranca, crte){
 
 # Izstopanje iz zmagovalne pozicije
 # rr = risk/reward ... npr. če se odločimo za 1:3 je rr = 3
-win_izstop_SinR <- function(tabela, cena, rr, toleranca, crte){
+win_izstop_SinR <- function(tabela, cena, rr, crte){
   linije <- crte$linije
   izstop <- rep(0, nrow(tabela))
   for(i in 1:nrow(tabela)){
     if(tabela$entry[i] == 1 & tabela$linija[i] == 1){
-      izstop[i] <- which(tab$linija == 2)[which(tab$linija == 2) > i][1]
+      izstop[i] <- which(tabela$linija == 2)[which(tabela$linija == 2) > i][1]
     }
     if(tabela$entry[i] == 2 & tabela$linija[i] == 2){
-      which(tab$linija == 1)[which(tab$linija == 1) > i][1]
+      izstop[i] <- which(tabela$linija == 1)[which(tabela$linija == 1) > i][1]
     }
     if(tabela$entry[i] == 2 & tabela$linija[i] == 1){
       cilj <- cena[i,]- sl*rr*tabela$spr_tedenski_N[i]
-      kandidati_cilj <- which(cena - cilj <= toleranca)
+      kandidati_cilj <- which(cena[,1] <= cilj)
       izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
     }
     if(tabela$entry[i] == 1 & tabela$linija[i] == 2){
       cilj <- cena[i,] + sl*rr*tabela$spr_tedenski_N[i]
-      kandidati_cilj <- which(cena - cilj <= toleranca)
+      kandidati_cilj <- which(cena[,1] >= cilj)
       izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
     }
   }
@@ -719,7 +755,7 @@ win_izstop_SinR <- function(tabela, cena, rr, toleranca, crte){
 }
 
 poracuni <- function(tabela, dnevi_N, cena, toleranca, rr){
-  library(rpatrec)
+  #library(rpatrec)
   tabela <- tabela[-nrow(tabela),]
   tab <- spr_N(tabela, dnevi_N)
   cena1 <- odlocitev_cena(tab, cena)
@@ -731,8 +767,8 @@ poracuni <- function(tabela, dnevi_N, cena, toleranca, rr){
   tab$linija <- tmp$linija
   tab$koliko_casa <- tmp$koliko_casa
   tab$spr_tedenski_N <- spr_tedenski_N(tab)
-  tab$izstop <- win_izstop_SinR(tab, cena1, rr, toleranca, SinR)
-  pomoc <- which(win_izstop_SinR(tab, cena1, rr, toleranca, SinR) > 0)
+  tab$izstop <- win_izstop_SinR(tab, cena1, rr, SinR)
+  pomoc <- which(win_izstop_SinR(tab, cena1, rr, SinR) > 0)
   tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1
   tab <- tab[tab$spr_tedenski_N > 0,]
   tab

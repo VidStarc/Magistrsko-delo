@@ -1,29 +1,189 @@
 
-?chaikinVolatility
+# Za relativne volatilnosti:
+# stop - loss še vedno absoluten N
 
-spr_N <- function(tabela, metoda){
+trgovanje_N <- function(tabela, zacetni_kapital, izstop_s1, cena, add, sl){
+  kandidati_s1 <- which(tabela$entry_s1==1 | tabela$entry_s1==2)
+  kandidati_s2 <- which(tabela$entry_s2==1 | tabela$entry_s2==2)
+  vstop <- kandidati_s1[1]
+  if(is.na(vstop)){profit <- 0}
+  else{
+    kdaj_vstopali <- c()
+    kdaj_dodali_enote <- c()
+    profit <- 0
+    profit1 <- c()
+    kdaj_profit <- c()
+    money <- zacetni_kapital
+    kdaj_izstop_long <- spr_win_izstop_s1_2(tabela, "long", izstop_s1, cena)
+    kdaj_izstop_short <- spr_win_izstop_s1_2(tabela, "short", izstop_s1, cena)
+    while(nrow(tabela) - vstop > 0){
+      kdaj_vstopali <- c(kdaj_vstopali, vstop)
+      cena_vstop <- cena[vstop,]
+      st_btc <- unit(money, tabela$tedenski_N_relativen[vstop])/cena_vstop
+      
+      if(tabela$entry_s1[vstop]==1 | tabela$entry_s2[vstop]==1){
+        izstop <- ifelse(is.na(kdaj_izstop_long[kdaj_izstop_long > vstop][1]), nrow(tabela), kdaj_izstop_long[kdaj_izstop_long > vstop][1])
+        cena_izstop <- cena[izstop,]
+        st_enot <- 1
+        stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
+        pol_N <- add*tabela$spr_tedenski_N[vstop]
+        cena_ko_dodamo <- cena_vstop
+        st_btc_dodamo <- st_btc
+        for(i in (vstop+1):(izstop-1)){
+          vstop <- i
+          if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
+            razlika <- cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)]
+            dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
+            if(st_enot + dodamo <= 4){
+              st_enot <- st_enot + dodamo
+              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$tedenski_N_relativen[i])/cena[i,])*dodamo)
+              stop_loss <- stop_loss + pol_N*dodamo
+              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+            }
+            else{
+              dodamo <- ifelse(st_enot==2, 2, 1)
+              st_enot <- st_enot + dodamo
+              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$tedenski_N_relativen[i])/cena[i,])*dodamo)
+              stop_loss <- stop_loss + pol_N*dodamo
+              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+            }
+          }
+          else{
+            if(cena[i,] <= stop_loss){
+              vstop <- ifelse(is.na(kandidati_s1[kandidati_s1 > vstop][1]), nrow(tabela), kandidati_s1[kandidati_s1 > vstop][1])
+              kdaj_profit <- c(kdaj_profit, i)
+              for(j in 1:length(st_btc_dodamo)){
+                profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
+              }
+              profit1 <- c(profit1, profit)
+              break}
+          }
+        }
+      }
+      else{
+        izstop <- ifelse(is.na(kdaj_izstop_short[kdaj_izstop_short > vstop][1]), nrow(tabela), kdaj_izstop_short[kdaj_izstop_short > vstop][1])
+        cena_izstop <- cena[izstop,]
+        st_enot <- 1
+        stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
+        pol_N <- add*tabela$spr_tedenski_N[vstop]
+        cena_ko_dodamo <- cena_vstop
+        st_btc_dodamo <- st_btc
+        for(i in (vstop+1):(izstop-1)){
+          vstop <- i
+          if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
+            razlika <- abs(cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)])
+            dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
+            if(st_enot + dodamo <= 4){
+              st_enot <- st_enot + dodamo
+              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$tedenski_N_relativen[i])/cena[i,])*dodamo)
+              stop_loss <- stop_loss - pol_N*dodamo
+              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+            }
+            else{
+              dodamo <- ifelse(st_enot==2, 2, 1)
+              st_enot <- st_enot + dodamo
+              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$tedenski_N_relativen[i])/cena[i,])*dodamo)
+              stop_loss <- stop_loss - pol_N*dodamo
+              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
+              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
+            }
+          }
+          else{
+            if(cena[i,] >= stop_loss){
+              vstop <- ifelse(is.na(kandidati_s1[kandidati_s1 > vstop][1]), nrow(tabela), kandidati_s1[kandidati_s1 > vstop][1])
+              kdaj_profit <- c(kdaj_profit, i)
+              for(j in 1:length(st_btc_dodamo)){
+                profit <- profit + (cena_ko_dodamo[j] - cena[i,])*st_btc_dodamo[j]
+              }
+              profit1 <- c(profit1, profit)
+              break}
+          }
+        }
+      }
+      if(vstop == (izstop-1)){
+        vstop <- vstop + 1
+        for(j in 1:length(st_btc_dodamo)){
+          profit <- profit + (abs(cena_izstop - cena_ko_dodamo[j]))*st_btc_dodamo[j]
+        }
+        profit1 <- c(profit1, profit)
+        kdaj_profit <- c(kdaj_profit, izstop)
+        vstop <- ifelse(is.na(kandidati_s2[kandidati_s2 > vstop][1]), nrow(tabela), kandidati_s2[kandidati_s2 > vstop][1])
+      }
+      #if(profit <= -100000){money <- 0.8*money}
+    }
+    profit
+    #data.frame(Profit = profit1, kdaj = kdaj_profit)
+    #tab_vstop <- data.frame("kdaj" = kdaj_vstopali, "kaj" = rep(1, length(kdaj_vstopali)))
+    #tab_dodajali <- data.frame("kdaj" = kdaj_dodali_enote, "kaj" = rep(2, length(kdaj_dodali_enote)))
+    #tab_izstop <- data.frame("kdaj" = kdaj_profit, "kaj" = rep(3, length(kdaj_profit)))
+    #tab <- rbind(tab_vstop, tab_dodajali, tab_izstop)
+    #tab[order(tab$kdaj),]
+  }}
+
+
+
+izracun_za_analizo_vol <- function(tabela, dnevi_N, vstop_s1, vstop_s2, cena, metoda){
+  library(QuantTools)
+  tabela <- tabela[-nrow(tabela),]
+  tab <- spr_N(tabela, dnevi_N)
+  tab <- N_relativen(tab, metoda)
+  cena1 <- odlocitev_cena(tab, cena)
+  # za N/SMA:
+  tab$sma <- sma(cena1[,1], dnevi_N)
+  tab$sma[is.na(tab$sma)] <- rep(1, length(tab$sma[is.na(tab$sma)]))
+  ##
+  
+  tab$entry_s1 <- spr_entry_s1(tab, vstop_s1, cena1)
+  tab$entry_s2 <- spr_entry_s2(tab, vstop_s2, cena1)
+  tab$spr_tedenski_N <- spr_tedenski_N(tab)
+  tab$tedenski_N_relativen <- tedenski_N_relativen(tab)
+  tab <- tab[tab$spr_tedenski_N > 0,]
+  
+  tab
+}
+
+dobicki_volatilnost <- function(tabela, dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55, izstop_s1 = 10, izstop_s2 = 20, 
+                            obdobje = 1800, zacetni_kapital = 1000000, cena = "Close", 
+                            add = 1/2, sl = 2, metoda = "close"){
+  tab <- izracun_za_analizo_vol(tabela, dnevi_N, vstop_s1, vstop_s2, cena, metoda)
+  dobicki <- c()
+  for(i in 1:(nrow(tab) - obdobje + 1)){
+    tmp <- tab[i:(obdobje + i - 1),]
+    cena2 <- odlocitev_cena(tmp, cena)
+    dobicki <- c(dobicki, trgovanje_N(tmp, zacetni_kapital, izstop_s1, cena2, add, sl))
+  }
+  dobicki
+}
+
+#######################################
+# različne metode funkcije volatility #
+#######################################
+
+N_relativen <- function(tabela, metoda){
   library(TTR)
-  tabela <- tabela[-1,]
-  ohlc <- tabela[,-1]
+  ohlc <- tabela[,c(-1, -6, -7)]
   n <- volatility(ohlc, n = 20, N = 365 , calc = metoda)
-  tabela$spr_N <- n
+  tabela$N_relativen <- n
   tabela
 }
 
-spr_tedenski_N <- function(tabela){
+tedenski_N_relativen <- function(tabela){
   t_N <- c()
   for(i in seq(1,nrow(tabela),7)){
-    t_N[i:(i+6)] <- tabela$spr_N[i]
+    t_N[i:(i+6)] <- tabela$N_relativen[i]
   }
   t_N[1:nrow(tabela)]
 }
 
-dobicki_Nclose_360 <- dobicki_hitreje(tabela = btc_1day, dnevi_N = "close", obdobje = 360, strategija = "S1")
-dobicki_Ngk_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1", dnevi_N = "garman.klass")
-dobicki_Npar_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1", dnevi_N = "parkinson")
-dobicki_Nrs_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1", dnevi_N = "rogers.satchell")
-dobicki_Ngkyz_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1", dnevi_N = "gk.yz")
-dobicki_Nyz_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija =  "S1", dnevi_N = "yang.zhang")
+dobicki_Nclose_360 <- dobicki_volatilnost(tabela = btc_1day, metoda = "close", obdobje = 360)
+dobicki_Ngk_360 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360, metoda = "garman.klass")
+dobicki_Npar_360 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360, metoda = "parkinson")
+dobicki_Nrs_360 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360, metoda = "rogers.satchell")
+dobicki_Ngkyz_360 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360, metoda = "gk.yz")
+dobicki_Nyz_360 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360, metoda = "yang.zhang")
 dobicki_Nclose_360 <- dobicki_Nclose_360/1000
 dobicki_Ngk_360 <- dobicki_Ngk_360/1000
 dobicki_Npar_360 <- dobicki_Npar_360/1000
@@ -33,11 +193,11 @@ dobicki_Nyz_360 <- dobicki_Nyz_360/1000
 
 
 
-###############
-# relativni N #
-###############
+#############
+# ATR/Close #
+#############
 
-spr_tedenski_N <- function(tabela){
+tedenski_N_relativen <- function(tabela){
   t_N <- c()
   for(i in seq(1,nrow(tabela),7)){
     #ifelse(i < 700, t_N[i:(i+6)] <- tabela$spr_N[i], t_N[i:(i+6)] <- log(tabela$spr_N[i]))
@@ -46,10 +206,10 @@ spr_tedenski_N <- function(tabela){
   t_N[1:nrow(tabela)]
 }
 
-proba5 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1")
-proba6 <- dobicki_hitreje(tabela = btc_1day, obdobje = 500, strategija = "S1")
-proba7 <- dobicki_hitreje(tabela = btc_1day, obdobje = 1000, strategija = "S1")
-proba8 <- dobicki_hitreje(tabela = btc_1day, strategija =  "S1")
+proba5 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360)
+proba6 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 500)
+proba7 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 1000)
+proba8 <- dobicki_volatilnost(tabela = btc_1day)
 proba5 <- proba5/1000
 proba6 <- proba6/1000
 proba7 <- proba7/1000
@@ -98,7 +258,7 @@ spr_tedenski_N <- function(tabela){
 dobicki_logN_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1")
 dobicki_logN_500 <- dobicki_hitreje(tabela = btc_1day, obdobje = 500, strategija = "S1")
 dobicki_logN_1000 <- dobicki_hitreje(tabela = btc_1day, obdobje = 1000, strategija = "S1")
-dobicki_logN_1800 <- dobicki_hitreje(tabela = btc_1day, strategija =  "S1")
+dobicki_logN_1800 <- dobicki_hitreje(tabela = btc_1day, strategija = "S1")
 dobicki_logN_360 <- dobicki_logN_360/1000
 dobicki_logN_500 <- dobicki_logN_500/1000
 dobicki_logN_1000 <- dobicki_logN_1000/1000
@@ -137,7 +297,7 @@ flextabela_pregled(logN_sd_pred_po_2014, 1)
 # N/SMA #
 #########
 
-spr_tedenski_N <- function(tabela){
+tedenski_N_relativen <- function(tabela){
   t_N <- c()
   for(i in seq(1,nrow(tabela),7)){
     #ifelse(i < 700, t_N[i:(i+6)] <- tabela$spr_N[i], t_N[i:(i+6)] <- log(tabela$spr_N[i]))
@@ -147,10 +307,10 @@ spr_tedenski_N <- function(tabela){
   t_N[1:nrow(tabela)]
 }
 
-dobicki_Nsma_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1")
-dobicki_Nsma_500 <- dobicki_hitreje(tabela = btc_1day, obdobje = 500, strategija = "S1")
-dobicki_Nsma_1000 <- dobicki_hitreje(tabela = btc_1day, obdobje = 1000, strategija = "S1")
-dobicki_Nsma_1800 <- dobicki_hitreje(tabela = btc_1day, strategija =  "S1")
+dobicki_Nsma_360 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360)
+dobicki_Nsma_500 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 500)
+dobicki_Nsma_1000 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 1000)
+dobicki_Nsma_1800 <- dobicki_volatilnost(tabela = btc_1day)
 dobicki_Nsma_360 <- dobicki_Nsma_360/1000
 dobicki_Nsma_500 <- dobicki_Nsma_500/1000
 dobicki_Nsma_1000 <- dobicki_Nsma_1000/1000
@@ -189,38 +349,30 @@ flextabela_pregled(Nsma_sd_pred_po_2014, 1)
 # TR/C #
 ########
 
-spr_N <- function(tabela, dnevi){
-  tr <- c()
-  for(i in 2:nrow(tabela)){
-    h <- tabela$High[i]
-    l <- tabela$Low[i]
-    pdc <- tabela$Close[i-1]
-    dc <- tabela$Close[i]
-    tr <- append(tr, max(h-l, h-pdc, pdc-l)/dc)
+N_relativen <- function(tabela, metoda){
+  tabela$tr1 <- tabela$TR/tabela$Close
+  
+  prvi_n <- mean(tabela$tr1[1:20])
+  n <- c(rep(0,(20-1)), prvi_n, rep(0, (nrow(tabela)-20)))
+  for(i in (20+1):nrow(tabela)){
+    n[i] <- ((20-1)*n[i-1] + tabela$tr1[i])/20
   }
-  tabela$TR <- c(0,tr)
-  tabela <- tabela[-1,]
-  prvi_n <- mean(tabela$TR[1:dnevi])
-  n <- c(rep(0,(dnevi-1)), prvi_n, rep(0, (nrow(tabela)-dnevi)))
-  for(i in (dnevi+1):nrow(tabela)){
-    n[i] <- ((dnevi-1)*n[i-1] + tabela$TR[i])/dnevi
-  }
-  tabela$spr_N <- n
+  tabela$N_relativen <- n
   tabela
 }
 
-spr_tedenski_N <- function(tabela){
+tedenski_N_relativen <- function(tabela){
   t_N <- c()
   for(i in seq(1,nrow(tabela),7)){
-    t_N[i:(i+6)] <- tabela$spr_N[i]
+    t_N[i:(i+6)] <- tabela$N_relativen[i]
   }
   t_N[1:nrow(tabela)]
 }
 
-dobicki_TR_360 <- dobicki_hitreje(tabela = btc_1day, obdobje = 360, strategija = "S1")
-dobicki_TR_500 <- dobicki_hitreje(tabela = btc_1day, obdobje = 500, strategija = "S1")
-dobicki_TR_1000 <- dobicki_hitreje(tabela = btc_1day, obdobje = 1000, strategija = "S1")
-dobicki_TR_1800 <- dobicki_hitreje(tabela = btc_1day, strategija =  "S1")
+dobicki_TR_360 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 360)
+dobicki_TR_500 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 500)
+dobicki_TR_1000 <- dobicki_volatilnost(tabela = btc_1day, obdobje = 1000)
+dobicki_TR_1800 <- dobicki_volatilnost(tabela = btc_1day)
 dobicki_TR_360 <- dobicki_TR_360/1000
 dobicki_TR_500 <- dobicki_TR_500/1000
 dobicki_TR_1000 <- dobicki_TR_1000/1000

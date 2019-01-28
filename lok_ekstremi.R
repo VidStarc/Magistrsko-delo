@@ -3,45 +3,35 @@ cena <- data.frame(tabela$Close)
 velikost_oken <- 10
 
 
-lok_eks <- function(tabela, cena, velikost_oken){
-  library(plyr)
+lok_ekstremi <- function(tabela, cena, velikost_oken){
   casovna_vrsta <- cena[,1]
   N <- length(casovna_vrsta)
   stp <- velikost_oken
-  #st_okvirjev <- floor(N/stp)
-  whichMinz <- c()
-  whichMaxz <- c()
-  st_min <- c()
-  st_max <- c()
-  for(j in 1:(N-stp)){
-    tmp_whichMinz <- which.min(casovna_vrsta[(j+1):(j+stp-2)]) + j
-    pogoj <- (length(whichMinz[whichMinz == tmp_whichMinz]) > 0)
-    if(!pogoj){
-      whichMinz <- c(whichMinz, tmp_whichMinz)
-      st_min <- c(st_min, 1)
-    }
-    else{
-      st_min[length(st_min)] <- st_min[length(st_min)] + 1
-    }
-    
-    tmp_whichMaxz <- which.max(casovna_vrsta[(j+1):(j+stp-2)]) + j
-    pogoj1 <- (length(whichMaxz[whichMaxz == tmp_whichMaxz]) > 0)
-    if(!pogoj1){
-      whichMaxz <- c(whichMaxz, tmp_whichMaxz)
-      st_max <- c(st_max, 1)
-    }
-    else{
-      st_max[length(st_max)] <- st_max[length(st_max)] + 1
-    }
-  }
-  whichMinz <- whichMinz[st_min > 1]
-  whichMaxz <- whichMaxz[st_max > 1]
-  minz <- casovna_vrsta[whichMinz]
-  maxz <- casovna_vrsta[whichMaxz]
-  
+  st_okvirjev <- floor(N/stp)
+  minz <- array(0.0, dim=st_okvirjev)
+  whichMinz <- array(0, dim=st_okvirjev)
+  maxz <- array(0.0, dim=st_okvirjev)
+  whichMaxz = array(0, dim=st_okvirjev)
+  for(j in 1:(st_okvirjev-1)){
+    lft <- (j-1)*stp + 1  #left and right elements of each chunk
+    rght <- j*stp
+    whichMinz[j] <- which.min(casovna_vrsta[lft:rght]) + lft - 1
+    minz[j] <- min(casovna_vrsta[lft:rght])
+    whichMaxz[j] <- which.max(casovna_vrsta[lft:rght]) + lft - 1
+    maxz[j] <- max(casovna_vrsta[lft:rght])
+  }   
+  #zadnji okvir
+  lft <- j*stp + 1  #left and right elements of each chunk
+  rght <- N
+  whichMinz[st_okvirjev] <- which.min(casovna_vrsta[lft:rght]) + lft - 1
+  minz[st_okvirjev] <- min(casovna_vrsta[lft:rght])
+  whichMaxz[st_okvirjev] <- which.max(casovna_vrsta[lft:rght]) + lft - 1
+  maxz[st_okvirjev] <- max(casovna_vrsta[lft:rght])
   list("kje_min" = whichMinz, "minz" = minz, "kje_max" = whichMaxz, "maxz" = maxz)
 }
 
+
+# lok_ekst je bila funkcija, ki sme jo dal v r&s ker je boljša v iskanju ekstremov
 lok_ekst <- lok_eks(btc_1day, data.frame(tabela$Close), 10)
 
 cas <- btc_1day$Timestamp[1:100]

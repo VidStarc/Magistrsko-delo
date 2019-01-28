@@ -31,17 +31,17 @@ vstop_MA <- function(tabela, cena){
 }
 
 # Izstop iz zmagovalne pozicije
-win_izstop_MA <- function(tabela, cena, toleranca, rr){
+win_izstop_MA <- function(tabela, cena, rr){
   izstop <- rep(0, nrow(tabela))
   for(i in 1:nrow(tabela)){
     if(tabela$entry[i] == 2){
       cilj <- cena[i,]- sl*rr*tabela$spr_tedenski_N[i]
-      kandidati_cilj <- which(abs(cena - cilj) <= toleranca)
+      kandidati_cilj <- which(cena[,1] <= cilj)
       izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
     }
     if(tabela$entry[i] == 1){
       cilj <- cena[i,] + sl*rr*tabela$spr_tedenski_N[i]
-      kandidati_cilj <- which(abs(cena - cilj) <= toleranca)
+      kandidati_cilj <- which(cena[,1] >= cilj)
       izstop[i] <- kandidati_cilj[kandidati_cilj > i][1]
     }
   }
@@ -60,16 +60,17 @@ MA_dobicki_btc_500 <- MA_dobicki_btc_500/1000
 MA_dobicki_btc_1000 <- MA_dobicki_btc_1000/1000
 MA_dobicki_btc_1800 <- MA_dobicki_btc_1800/1000
 
+#source("TA_pregled.R")
 MA_pregled_btc <- pregled_trgovanje(MA_dobicki_btc_360, MA_dobicki_btc_500, MA_dobicki_btc_1000, 
                                       MA_dobicki_btc_1800)
 
 flextabela_pregled(MA_pregled_btc, 0)
 
-kr_neki <- pregled_trgovanje(MA_dobicki_btc_360[700:length(MA_dobicki_btc_360)], 
-                             MA_dobicki_btc_500[700:length(MA_dobicki_btc_500)], 
-                             MA_dobicki_btc_1000[700:length(MA_dobicki_btc_1000)], 
-                             MA_dobicki_btc_1800)
-flextabela_pregled(kr_neki, 0)
+# kr_neki <- pregled_trgovanje(MA_dobicki_btc_360[700:length(MA_dobicki_btc_360)], 
+#                              MA_dobicki_btc_500[700:length(MA_dobicki_btc_500)], 
+#                              MA_dobicki_btc_1000[700:length(MA_dobicki_btc_1000)], 
+#                              MA_dobicki_btc_1800)
+# flextabela_pregled(kr_neki, 0)
 
 
 # pred/po letu 2014
@@ -111,6 +112,8 @@ flextabela_pregled(MA1_sd_pred_po_2014, 0)
 ##############
 # Optimizacija
 
+#source("trgovanje.R") # na koncu: za optimizacijo
+
 # moving average
 dobicki_ma <- function(tabela){
   M <- matrix(0, 6, 6)
@@ -139,8 +142,8 @@ colnames(MAsd) <- c(50, 75, 100, 125, 150, 200)
 library(officer)
 library(flextable)
 
-flextabela_matrika(spr(cagr(MAdobicki), "ma"), "cagr")
-flextabela_matrika(spr(MAdobicki/MAsd, "ma"), "cagr")
+flextabela_matrika(spr(cagr(MAdobicki), "ma"), 2)
+flextabela_matrika(spr(MAdobicki/MAsd, "ma"), 2)
 
 
 
@@ -243,6 +246,7 @@ ADX_dobicki_btc_360 <- ADX_dobicki_btc_360/1000
 ADX_dobicki_btc_500 <- ADX_dobicki_btc_500/1000
 ADX_dobicki_btc_1000 <- ADX_dobicki_btc_1000/1000
 ADX_dobicki_btc_1800 <- ADX_dobicki_btc_1800/1000
+
 
 
 ####################
@@ -546,7 +550,7 @@ vstop_SO <- function(tabela){
   entry
 }
 
-SO1_dobicki_btc_360 <- dobicki_trgovanje(btc_1day, obdobje = 360, indikator = "so")
+SO_dobicki_btc_360 <- dobicki_trgovanje(btc_1day, obdobje = 360, indikator = "so")
 SO_dobicki_btc_500 <- dobicki_trgovanje(btc_1day, obdobje = 500, indikator = "so")
 SO_dobicki_btc_1000 <- dobicki_trgovanje(btc_1day, obdobje = 1000, indikator = "so")
 SO_dobicki_btc_1800 <- dobicki_trgovanje(btc_1day, obdobje = 1800, indikator = "so")
@@ -830,3 +834,6 @@ CO_dobicki_btc_360 <- CO_dobicki_btc_360/1000
 CO_dobicki_btc_500 <- CO_dobicki_btc_500/1000
 CO_dobicki_btc_1000 <- CO_dobicki_btc_1000/1000
 CO_dobicki_btc_1800 <- CO_dobicki_btc_1800/1000
+
+
+

@@ -27,6 +27,15 @@ dobicki_toleranca <- function(tabela){
 }
 
 SinRtoleranca <- dobicki_toleranca(btc_1day)
+
+dodan_kolicnik <- function(tabela){
+  kolicnik <- c()
+  for(i in 1:ncol(tabela)){
+    kolicnik <- c(kolicnik, round(tabela[1, i]/tabela[2, i], 2))
+  }
+  rbind(tabela, "kolicnik" = kolicnik)
+}
+
 SinRtoleranca_2 <- dodan_kolicnik(SinRtoleranca)
 
 
@@ -63,9 +72,10 @@ spr <- function(tabela, name){
 
 library(officer)
 library(flextable)
-flextabela_matrika(spr(SinRtoleranca_2, "tol"), "nc")
+flextabela_matrika(spr(SinRtoleranca_2, "tol"), 1)
 
-flextabela_matrika(spr(cagr(SinRdobicki_rr), "rr"), "cagr")
-flextabela_matrika(spr(SinRdobicki_rr/SinRsd_rr, "rr"), "cagr")
+
+flextabela_matrika(spr(cagr(SinRdobicki_rr), "rr"), 2)
+flextabela_matrika(spr(SinRdobicki_rr/SinRsd_rr, "rr"), 2)
 
 

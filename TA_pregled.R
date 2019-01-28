@@ -1,5 +1,5 @@
 cagr <- function(tabela, zacetni_kapital = 1000000, obdobje = 1800){
-  tabela <- round(((tabela/zacetni_kapital+1)^(365/obdobje)-1)*100,3)
+  tabela <- round(((tabela/zacetni_kapital+1)^(365/obdobje)-1)*100,2)
   tabela
 }
 
@@ -40,6 +40,31 @@ flextabela_pregled <- function(tabela, st_decimalk){
   ifelse(st_decimalk == 0, tabela <- set_formatter_type(tabela, fmt_double = "%.00f"), 
          ifelse(st_decimalk == 1, tabela <- set_formatter_type(tabela, fmt_double = "%.01f"), 
                 tabela <- set_formatter_type(tabela, fmt_double = "%.03f")))
+  tabela
+}
+
+flextabela_matrika <- function(tabela, st_decimalk){
+  n <- nrow(tabela)
+  c <- ncol(tabela)
+  big_border = fp_border(color="black", width = 2)
+  tabela <- regulartable(tabela)
+  tabela <- bg(tabela, bg = "coral", part = "header")
+  tabela <- bg(tabela, bg = "cyan", part = "body")
+  tabela <- bold(tabela, part = "header")
+  tabela <- bold(tabela, j = 1, part = "body")
+  tabela <- align(tabela, align = "center", part = "all")
+  ifelse(st_decimalk == 0, tabela <- set_formatter_type(tabela, fmt_double = "%.00f"), 
+         ifelse(st_decimalk == 1, tabela <- set_formatter_type(tabela, fmt_double = "%.01f"), 
+                ifelse(st_decimalk == 2, tabela <- set_formatter_type(tabela, fmt_double = "%.02f"), 
+                       tabela <- set_formatter_type(tabela, fmt_double = "%.03f"))))
+  tabela <- bg(tabela, bg = "coral", j = 1)
+  tabela <- border_remove(tabela)
+  tabela <- hline_top(tabela, border = big_border, part = "header")
+  tabela <- hline_bottom(tabela, border = big_border, part = "body")
+  tabela <- vline_left(tabela, border = big_border)
+  tabela <- vline_right(tabela, border = big_border)
+  tabela <- hline(tabela, i = 1, j = 2:c, border = big_border, part = "header")
+  tabela <- vline(tabela, i = 1:n, j = 1, border = big_border, part = "body")
   tabela
 }
 
