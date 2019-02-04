@@ -15,7 +15,7 @@ spr_dobicki_trgovanje <- function(tabela, dnevi_N = 20, obdobje = 1800, zacetni_
 # Toleranca
 dobicki_toleranca <- function(tabela){
   M <- matrix(0, 2, 5)
-  zap_toleranca <- c(0.1, 0.015, 0.02, 0.025, 0.03)
+  zap_toleranca <- c(0.01, 0.015, 0.02, 0.025, 0.03)
   for(j in 1:5){
     tmp <- spr_dobicki_trgovanje(tabela, toleranca = zap_toleranca[j])
     M[1, j] <- tmp[1]

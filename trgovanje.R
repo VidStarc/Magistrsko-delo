@@ -227,6 +227,8 @@ poracuni <- function(tabela, dnevi_N, cena, dnevi_ema1, dnevi_ema2, toleranca, r
   cena1 <- odlocitev_cena(tab, cena)
   tab$izstop <- win_izstop_MA(tab, cena1, rr)
   pomoc <- which(win_izstop_MA(tab, cena1, rr) > 0)
+  #tab$izstop <- win_izstop_chandelier(tab, cena1, 22)
+  #pomoc <- which(win_izstop_chandelier(tab, cena1, 22) > 0)
   tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1   #to velja samo za btc_1day
   tab <- tab[tab$spr_tedenski_N > 0,]
   tab
@@ -247,132 +249,6 @@ dobicki_trgovanje <- function(tabela, dnevi_N = 20, obdobje = 1800, zacetni_kapi
   }
   dobicki
 }
-
-
-################
-# za uspešnost #
-################
-
-dobicki_pozicij <- function(tabela, zacetni_kapital, cena, add, sl){
-  kandidati <- which(tabela$entry==1 | tabela$entry==2)
-  vstop <- kandidati[1]
-  if(is.na(vstop)){profit <- 0}
-  else{
-    kdaj_vstopali <- c()
-    kdaj_dodali_enote <- c()
-    profit <- 0
-    profit1 <- c()
-    kdaj_profit <- c()
-    money <- zacetni_kapital
-    
-    while(nrow(tabela) - vstop > 0){
-      kdaj_vstopali <- c(kdaj_vstopali, vstop)
-      cena_vstop <- cena[vstop,]
-      st_btc <- unit(money, tabela$spr_tedenski_N[vstop])/cena_vstop
-      
-      #Buy signal
-      if(tabela$entry[vstop]== 1){
-        izstop <- ifelse(tabela$izstop[vstop] - i_izstop > nrow(tabela) | 
-                           is.na(tabela$izstop[vstop] - i_izstop > nrow(tabela)), nrow(tabela), tabela$izstop[vstop] - i_izstop)
-        cena_izstop <- cena[izstop,]
-        st_enot <- 1
-        stop_loss <- cena_vstop - sl*tabela$spr_tedenski_N[vstop]
-        pol_N <- add*tabela$spr_tedenski_N[vstop]
-        cena_ko_dodamo <- cena_vstop
-        st_btc_dodamo <- st_btc
-        for(i in (vstop+1):(izstop-1)){
-          vstop <- i
-          if((cena[i,] > cena_vstop + st_enot*pol_N) & (st_enot < 4)){
-            razlika <- cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)]
-            dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
-            if(st_enot + dodamo <= 4){
-              st_enot <- st_enot + dodamo
-              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
-              stop_loss <- stop_loss + pol_N*dodamo
-              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
-            }
-            else{
-              dodamo <- ifelse(st_enot==2, 2, 1)
-              st_enot <- st_enot + dodamo
-              st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
-              stop_loss <- stop_loss + pol_N*dodamo
-              kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-              cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
-            }
-          }
-          else{
-            if(cena[i,] <= stop_loss){
-              vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
-              kdaj_profit <- c(kdaj_profit, i)
-              for(j in 1:length(st_btc_dodamo)){
-                profit <- profit + (cena[i,] - cena_ko_dodamo[j])*st_btc_dodamo[j]
-              }
-              profit1 <- c(profit1, profit)
-              break}
-          }
-        }
-      }
-      else{
-        # Sell signal
-        if(tabela$entry[vstop]== 2){
-          izstop <- ifelse(tabela$izstop[vstop] - i_izstop > nrow(tabela)  | 
-                             is.na(tabela$izstop[vstop] - i_izstop > nrow(tabela)), nrow(tabela), tabela$izstop[vstop] - i_izstop)
-          cena_izstop <- cena[izstop,]
-          st_enot <- 1
-          stop_loss <- cena_vstop + sl*tabela$spr_tedenski_N[vstop]
-          pol_N <- add*tabela$spr_tedenski_N[vstop]
-          cena_ko_dodamo <- cena_vstop
-          st_btc_dodamo <- st_btc
-          for(i in (vstop+1):(izstop-1)){
-            vstop <- i
-            if((cena[i,] < cena_vstop - st_enot*pol_N) & (st_enot < 4)){
-              razlika <- abs(cena[i,] - cena_ko_dodamo[length(cena_ko_dodamo)])
-              dodamo <- min(3, ifelse(floor(razlika/pol_N)==0, 1, floor(razlika/pol_N)))
-              if(st_enot + dodamo <= 4){
-                st_enot <- st_enot + dodamo
-                st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
-                stop_loss <- stop_loss - pol_N*dodamo
-                kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-                cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
-              }
-              else{
-                dodamo <- ifelse(st_enot==2, 2, 1)
-                st_enot <- st_enot + dodamo
-                st_btc_dodamo <- c(st_btc_dodamo, (unit(money, tabela$spr_tedenski_N[i])/cena[i,])*dodamo)
-                stop_loss <- stop_loss - pol_N*dodamo
-                kdaj_dodali_enote <- c(kdaj_dodali_enote, i)
-                cena_ko_dodamo <- c(cena_ko_dodamo, cena[i,])
-              }
-            }
-            else{
-              if(cena[i,] >= stop_loss){
-                vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
-                kdaj_profit <- c(kdaj_profit, i)
-                for(j in 1:length(st_btc_dodamo)){
-                  profit <- profit + (cena_ko_dodamo[j] - cena[i,])*st_btc_dodamo[j]
-                }
-                profit1 <- c(profit1, profit)
-                break}
-            }
-          }
-        }}
-      if(vstop == (izstop-1)){
-        vstop <- vstop + 1
-        for(j in 1:length(st_btc_dodamo)){
-          profit <- profit + (abs(cena_izstop - cena_ko_dodamo[j]))*st_btc_dodamo[j]
-        }
-        profit1 <- c(profit1, profit)
-        kdaj_profit <- c(kdaj_profit, izstop)
-        vstop <- ifelse(is.na(kandidati[kandidati > vstop][1]), nrow(tabela), kandidati[kandidati > vstop][1])
-      }
-      #if(profit <= -100000){money <- 0.8*money}
-    }
-    profit1
-  }}
-
-
-
 
 
 ## Za optimizacijo
