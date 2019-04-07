@@ -1,3 +1,4 @@
+total.start.time <- Sys.time()
 import_or_install <- function(paket) {
     if (!is.element(paket, .packages(all.available = TRUE))) {
       install.packages(paket)
@@ -338,4 +339,5 @@ btc_1day %>%
   ggplot(aes(x=Timestamp, y=profit, color=profit_type)) +
   geom_line()
 
-
+# total timing test
+print(Sys.time() - total.start.time)
