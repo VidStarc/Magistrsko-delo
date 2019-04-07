@@ -318,6 +318,7 @@ skip <- max(entry_breakout, exit_breakout) + 1
 start_index <- -1519
 steps <- 360
 accountSize <- 1e6
+allowOverLimit <- 1  
 
 btc_1day %>%
   TrueRange %>% 
@@ -326,14 +327,15 @@ btc_1day %>%
   SMA_max_min(n=exit_breakout, minName="longExit", maxName="shortExit") %>%
   periodic_N %>%
   position_size(Close) %>%
-  run_analysis_R(skip=skip, longsAndShorts = 0L, start=start_index, steps=steps, accountSize=accountSize) %>%
+  run_analysis_R(skip=skip, longsAndShorts = 0L, start=start_index, steps=steps, accountSize=accountSize, allowOverLimit=allowOverLimit) %>%
   data.frame %>% 
   mutate(
     total_profit = (long_profit + short_profit)/accountSize,
     long_profit = long_profit/accountSize,
-    short_profit = short_profit/accountSize
+    short_profit = short_profit/accountSize,
+    avg_capital_utilization=avg_capital_utilization/accountSize
   )%>%
-  select(Timestamp, long_profit, short_profit, total_profit) %>%
+  select(Timestamp, long_profit, short_profit, total_profit, avg_capital_utilization) %>%
   filter(!is.nan(long_profit) & !is.nan(short_profit)) %>% 
   gather("profit_type", "profit", -Timestamp) %>% 
   ggplot(aes(x=Timestamp, y=profit, color=profit_type)) +
