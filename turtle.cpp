@@ -194,15 +194,19 @@ NumericMatrix run_analysis(
         result(pos, offset + 0) = long_position_count;
         result(pos, offset + 1) = position_type > 0 ? (current_unit + 1) : 0;
         result(pos, offset + 2) = long_profit;
-        for(int u = 0; u <= current_unit; u++) {
-          result(pos, offset + 3 + u) = stoploss[u];
+        if(position_type > 0) {
+          for(int u = 0; u <= current_unit; u++) {
+            result(pos, offset + 3 + u) = stoploss[u];
+          }
         }
         offset = (2 + 3 + max_units);
         result(pos, offset + 0) = short_position_count;
         result(pos, offset + 1) = position_type < 0 ? (current_unit + 1) : 0;
         result(pos, offset + 2) = short_profit;
-        for(int u = 0; u <= current_unit; u++) {
-          result(pos, offset + 3 + u) = stoploss[u];
+        if(position_type < 0) {
+          for(int u = 0; u <= current_unit; u++) {
+            result(pos, offset + 3 + u) = stoploss[u];
+          }
         }
       }
     } // inner for

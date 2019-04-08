@@ -14,6 +14,7 @@ import_or_install("ggplot2")
 import_or_install("tidyquant")
 import_or_install("Rcpp")
 import_or_install("tidyr")
+import_or_install("grid")
 
 # library(devtools)
 # install_version("ggplot2",version = "3.0.0")
@@ -286,8 +287,8 @@ run_analysis_R <- function(data, skip=0, start=-1L, accountSize=1e6, riskPercent
     position_nms <- c("position_cnt", "units", "profit")
     long_nms <- paste0("long_", position_nms)
     short_nms <- paste0("short_", position_nms)
-    long_stoploss_names <- paste("long_stoploss_", 1:maxUnits)
-    short_stoploss_names <- paste("short_stoploss_", 1:maxUnits)
+    long_stoploss_names <- paste0("long_stoploss_", 1:maxUnits)
+    short_stoploss_names <- paste0("short_stoploss_", 1:maxUnits)
     nms <- c("mark", "capital_utilization", long_nms, long_stoploss_names, short_nms, short_stoploss_names)
   }
   result <- run_analysis(
@@ -312,6 +313,9 @@ run_analysis_R <- function(data, skip=0, start=-1L, accountSize=1e6, riskPercent
   data %>% bind_cols(result)  
 }
 
+###########
+# Trading test
+###########
 entry_breakout <- 20
 exit_breakout <- 10
 skip <- max(entry_breakout, exit_breakout) + 1
@@ -334,12 +338,76 @@ btc_1day %>%
     long_profit = long_profit/accountSize,
     short_profit = short_profit/accountSize,
     avg_capital_utilization=avg_capital_utilization/accountSize
-  )%>%
-  select(Timestamp, long_profit, short_profit, total_profit, avg_capital_utilization) %>%
+  )%>% 
+  select(Timestamp, long_profit, short_profit, total_profit, avg_capital_utilization) %>% 
   filter(!is.nan(long_profit) & !is.nan(short_profit)) %>% 
   gather("profit_type", "profit", -Timestamp) %>% 
   ggplot(aes(x=Timestamp, y=profit, color=profit_type)) +
-  geom_line()
+  geom_line() 
+
+
+###################
+# One trading test
+###################
+entry_breakout <- 20
+exit_breakout <- 10
+skip <- max(entry_breakout, exit_breakout) + 1
+# start_index <- 1919
+# steps <- 360
+start_index <- 1919
+steps <- 360
+accountSize <- 1e6
+allowOverLimit <- 0  
+
+run_data <- btc_1day %>%
+  TrueRange %>% 
+  N %>%
+  SMA_max_min(n=entry_breakout, minName="shortEntry", maxName="longEntry") %>%
+  SMA_max_min(n=exit_breakout, minName="longExit", maxName="shortExit") %>%
+  periodic_N %>%
+  position_size(Close) %>%
+  run_analysis_R(skip=skip, longsAndShorts = 0L, start=start_index, steps=steps, accountSize=accountSize, allowOverLimit=allowOverLimit) %>%
+  data.frame %>% 
+  mutate(
+    total_profit = (long_profit + short_profit),
+    long_profit = long_profit,
+    short_profit = short_profit
+  )%>% 
+  select(Timestamp, mark, long_profit, short_profit, total_profit, capital_utilization,long_position_cnt, long_units, long_stoploss_1, short_position_cnt, short_units, short_stoploss_1, Close, N) %>% 
+  slice((start_index + 1):(start_index + steps))
+
+# run_data %>% View
+
+ 
+# run_data %>% 
+#     gather("profit_type", "value", -Timestamp) %>% 
+#     ggplot(aes(x=Timestamp, y=value, color=profit_type)) + geom_line() + 
+#     facet_grid(profit_type ~ ., scales = "free_y") 
+show_stops <- FALSE
+show_N <- TRUE
+show_capital <- TRUE
+
+run_data %>% 
+  select(Timestamp, Close, long_stoploss_1, short_stoploss_1, N, total_profit, capital_utilization) %>%
+  mutate(
+    total_profit_div100=total_profit/100,
+    capital_utilization_div100=capital_utilization/100,
+    rel_N_10000=N/Close*10000
+  ) %>%
+  select(-total_profit, -capital_utilization) %>%
+  (function(data) {if(!show_stops) data %>% select(-long_stoploss_1, -short_stoploss_1) else data}) %>%
+  (function(data) {if(!show_capital) data %>% select(-total_profit_div100, -capital_utilization_div100) else data}) %>%
+  (function(data) {if(!show_N) data %>% select(-N, -rel_N_10000) else data}) %>%
+  gather("profit_type", "value", -Timestamp) %>% 
+  ggplot(aes(x=Timestamp, y=value, color=profit_type)) + geom_line()
+
+# grid.newpage()
+# grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last"))
+# 
+#   filter(!is.nan(long_profit) & !is.nan(short_profit)) %>% 
+#   gather("profit_type", "profit", -Timestamp) %>% 
+#   ggplot(aes(x=Timestamp, y=profit, color=profit_type)) +
+#   geom_line() 
 
 # total timing test
 print(Sys.time() - total.start.time)
