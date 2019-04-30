@@ -165,7 +165,7 @@ dobicki_volatilnost <- function(tabela, dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 
 N_relativen <- function(tabela, metoda){
   library(TTR)
   ohlc <- tabela[,c(-1, -6, -7)]
-  n <- volatility(ohlc, n = 20, N = 365 , calc = metoda)
+  n <- volatility(ohlc, n = 20, N = 1 , calc = metoda)
   tabela$N_relativen <- n
   tabela
 }

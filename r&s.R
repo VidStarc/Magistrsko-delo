@@ -598,9 +598,34 @@ flextabela_pregled(SinR_sd_pred_po_2014, 0)
 
 # Rpatrec_package
 library(rpatrec)
+#plot(btc_1day$Timestamp[1:100], btc_1day$Close[1:100], type = "l")
+#lines(btc_1day$Timestamp[1:100], a[1:100], col="blue")
+
+library(ggplot2)
 a <- kernel(btc_1day$Close[1:100], 1)
-plot(btc_1day$Timestamp[1:100], btc_1day$Close[1:100], type = "l")
-lines(btc_1day$Timestamp[1:100], a[1:100], col="blue")
+b <- kernel(btc_1day$Close[1:100], 5)
+ggplot()+
+  geom_line(aes(btc_1day$Timestamp[1:100], btc_1day$Close[1:100]))+
+  geom_line(aes(btc_1day$Timestamp[1:100], a), col = "blue")+
+  theme_minimal()+
+  ggtitle("Glajenje (širina okolice = 1)")+
+  xlab("Trgovalni dnevi")+
+  ylab("Zaključna cena dneva")+
+  theme(plot.title = element_text(hjust = 0.5, size = 16), axis.title = element_text(size = 14), 
+        axis.text = element_text(size = 12))
+
+ggplot()+
+  geom_line(aes(btc_1day$Timestamp[1:100], btc_1day$Close[1:100]))+
+  geom_line(aes(btc_1day$Timestamp[1:100], b), col = "blue")+
+  theme_minimal()+
+  ggtitle("Glajenje (širina okolice = 5)")+
+  xlab("Trgovalni dnevi")+
+  ylab("Zaključna cena dneva")+
+  theme(plot.title = element_text(hjust = 0.5, size = 16), axis.title = element_text(size = 14), 
+        axis.text = element_text(size = 12))
+
+
+
 
 prepoznavalnik <- function(jedro){
   library(Ckmeans.1d.dp)
@@ -790,203 +815,203 @@ flextabela_pregled(proba, 0)
 
 
 
-#############################################################################################################
-# package quantmod, različne vrste clusteringov, detekcija S&R - preizkušanje
-
-library(quantmod)
-#https://github.com/joshuaulrich/quantmod/tree/master/R
-#https://cran.r-project.org/web/packages/quantmod/quantmod.pdf
-
-getSymbols("SPY", from="2012-01-01", to="2012-06-15")
-chartSeries(SPY, theme="white")
-
-
-#getSymbols.rda("databtc_1day", from="2013-01-01", to="2013-06-15")
-#proba1 <- getSymbols.csv("podatki/BTC_USD_min", env = .GlobalEnv)
-getSymbols("BTC-USD")
-chartSeries(`BTC-USD`[1:100,], theme = "white", TA = "addWMA()")
-addEMA()
-
-
-##############
-# Clustering #
-##############
-# Podatki
-podatki <- btc_1day[, c(-1)]
-podatki <- na.omit(podatki)
-#podatki <- scale(podatki)
-
-
-library("factoextra")
-# Optimal number of clusters
-wss <- (nrow(podatki)-1)*sum(apply(podatki,2,var))
-for (i in 2:30) wss[i] <- sum(kmeans(podatki, centers=i)$withinss)
-plot(1:30, wss, type="b", xlab="Number of Clusters",
-     ylab="Within groups sum of squares")
-#ali:
-fviz_nbclust(podatki, kmeans, method = "gap_stat")
-#ali:
-library("magrittr")
-library("NbClust")
-res.nbclust <- podatki %>%
-  NbClust(distance = "euclidean",
-          min.nc = 2, max.nc = 30, 
-          method = "complete", index ="all")
-fviz_nbclust(res.nbclust, ggtheme = theme_minimal())
-
-
-# Partitioning clustering
-# Hartigan and Wong algorithm
-fit <- kmeans(podatki, 30)
-aggregate(podatki,by=list(fit$cluster),FUN=mean)
-#isto je fit$centers
-#podatki <- data.frame(podatki, fit$cluster)
-library(cluster) 
-clusplot(podatki, fit$cluster, color=TRUE, shade=TRUE, 
-         labels=2, lines=0)
-# Centroid Plot against 1st 2 discriminant functions
-library(fpc)
-plotcluster(podatki, fit$cluster)
-
-km.res <- kmeans(podatki, 30, nstart = 25)
-fviz_cluster(km.res, data = podatki,
-             ellipse.type = "convex",
-             palette = "jco",
-             ggtheme = theme_minimal())
-
-
-# Hierarchical Clustering
-d <- dist(podatki, method = "euclidean")
-fit <- hclust(d, method="ward.D") 
-plot(fit)
-groups <- cutree(fit, k=30)
-rect.hclust(fit, k=30, border="red")
-#ali:
-fviz_dend(fit, k = 30,cex = 0.5, 
-          k_colors = c("#2E9FDF", "#00AFBB", "#E7B800", "#FC4E07"),
-          color_labels_by_k = TRUE, rect = TRUE)
-
-
-# Ward Hierarchical Clustering with Bootstrapped p values
-library(pvclust)
-podatki1 <- data.frame(podatki[,c(1, 4)])
-fit <- pvclust(podatki, method.hclust="ward.D2",
-               method.dist="euclidean")
-plot(fit)
-pvrect(fit, alpha=.95)
-
-
-# Model Based Clustering
-library(mclust)
-fit <- Mclust(podatki)
-plot(fit) # plot results 
-summary(fit) # display the best model
-
-
-# Clustering validation
-res.hc <- iris[, -5] %>%
-  scale() %>%
-  eclust("hclust", k = 3, graph = FALSE)
-fviz_silhouette(res.hc)
-
-
-# Bitcoin
-fit <- kmeans(podatki, 50)
-skupine <- data.frame(povprecje = fit$centers[,4], velikost = fit$size)
-kaj_graf <- btc_1day[1:100,]
-plot(x = kaj_graf$Timestamp, y = kaj_graf$Close, type = "p")
-abline(h = skupine$povprecje, col = "red")
-
-
-# Drugi primeri
-
-# Fuzzy clustering - en element lahko v večih clustrih
-library(cluster) # Loads the cluster library.
-fannyy <- fanny(podatki, k=4, metric = "euclidean", memb.exp = 1.2)
-round(fannyy$membership, 2)[1:4,]
-fannyy$clustering 
-
-# Principal component analysis
-pca <- prcomp(podatki, scale=T)
-summary(pca)
-plot(pca$x, pch=20, col="blue", type="n") # To plot dots, drop type="n"
-text(pca$x, rownames(pca$x), cex=0.8)
-
-# Multidimensional Scaling
-library(stats)
-loc <- cmdscale(dist(podatki, method = "euclidean")) 
-plot(loc[,1], -loc[,2], type="n", xlab="", ylab="", main="cmdscale(podatki)")
-text(loc[,1], -loc[,2], rownames(loc), cex=0.8) 
-
-
-
-## Support and Resistance
-
-detectSupportResistance <- function(timeSeries, tolerance=0.01, nChunks=10, nPoints=3, plotChart=TRUE)
-{
-  #detect maximums and minimums
-  N = length(timeSeries)
-  stp = floor(N / nChunks)
-  minz = array(0.0, dim=nChunks)
-  whichMinz = array(0, dim=nChunks)
-  maxz = array(0.0, dim=nChunks)
-  whichMaxz = array(0, dim=nChunks)
-  for(j in 1:(nChunks-1)) 
-  {
-    lft = (j-1)*stp + 1  #left and right elements of each chunk
-    rght = j*stp
-    whichMinz[j] = which.min(timeSeries[lft:rght]) + lft
-    minz[j] = min(timeSeries[lft:rght])
-    whichMaxz[j] = which.max(timeSeries[lft:rght]) + lft
-    maxz[j] = max(timeSeries[lft:rght])
-  }   
-  #last chunk
-  lft = j*stp + 1  #left and right elements of each chunk
-  rght = N
-  whichMinz[nChunks] = which.min(timeSeries[lft:rght]) + lft
-  minz[nChunks] = min(timeSeries[lft:rght])
-  whichMaxz[nChunks] = which.max(timeSeries[lft:rght]) + lft
-  maxz[nChunks] = max(timeSeries[lft:rght])
-  
-  result = list()
-  result[["minima"]] = NULL
-  result[["minimaAt"]] = NULL
-  result[["maxima"]] = NULL
-  result[["maximaAt"]] = NULL
-  span = tolerance*(max(maxz) - min(minz))
-  
-  rang = order(minz)[1:nPoints]
-  if((minz[rang[nPoints]] - minz[rang[1]]) <= span)
-  {
-    result[["minima"]] = minz[rang[1:nPoints]]
-    result[["minimaAt"]] = whichMinz[rang[1:nPoints]]
-  } 
-  
-  rang = order(maxz, decreasing = TRUE)[1:nPoints]
-  if((maxz[rang[1]] - maxz[rang[nPoints]]) <= span)
-  {
-    result[["maxima"]] = maxz[rang[1:nPoints]]
-    result[["maximaAt"]] = whichMaxz[rang[1:nPoints]]
-  } 
-  
-  if(plotChart)
-  {
-    ts.plot(timeSeries)
-    points(whichMinz, minz, col="blue")
-    points(whichMaxz, maxz, col="red")
-    if(!is.null(result[["minima"]])  &&  !is.null(result[["minimaAt"]]))
-      abline(lm(result[["minima"]] ~  result[["minimaAt"]]))
-    if(!is.null(result[["maxima"]])  &&  !is.null(result[["maximaAt"]]))
-      abline(lm(result[["maxima"]] ~  result[["maximaAt"]]))
-  } 
-  
-  return(result)    
-}
-
-# ni dobra funkcija, ker si sam zbereš okvirje na katerih izračuna min in max
-# torej, če si zbral celotno dolžino timeSeries 100 in okvirjev 10 bo min in max manj kot če si zbral okvirjev 50
-# support izriše le če so prve tri točke znotraj tolerance in resistance če so zadnje tri točke
-# za našo analizo bi mogel spremenit funkcijo, da pogleda vsake tri točke
-detectSupportResistance(timeSeries = btc_1day$Close[100:200], tolerance = 0.03, nChunks = 10, nPoints = 3, plotChart = T)
-detectSupportResistance(timeSeries = btc_1day$Close[120:200], tolerance = 0.03, nChunks = 10, nPoints = 3, plotChart = T)
+# #############################################################################################################
+# # package quantmod, različne vrste clusteringov, detekcija S&R - preizkušanje
+# 
+# library(quantmod)
+# #https://github.com/joshuaulrich/quantmod/tree/master/R
+# #https://cran.r-project.org/web/packages/quantmod/quantmod.pdf
+# 
+# getSymbols("SPY", from="2012-01-01", to="2012-06-15")
+# chartSeries(SPY, theme="white")
+# 
+# 
+# #getSymbols.rda("databtc_1day", from="2013-01-01", to="2013-06-15")
+# #proba1 <- getSymbols.csv("podatki/BTC_USD_min", env = .GlobalEnv)
+# getSymbols("BTC-USD")
+# chartSeries(`BTC-USD`[1:100,], theme = "white", TA = "addWMA()")
+# addEMA()
+# 
+# 
+# ##############
+# # Clustering #
+# ##############
+# # Podatki
+# podatki <- btc_1day[, c(-1)]
+# podatki <- na.omit(podatki)
+# #podatki <- scale(podatki)
+# 
+# 
+# library("factoextra")
+# # Optimal number of clusters
+# wss <- (nrow(podatki)-1)*sum(apply(podatki,2,var))
+# for (i in 2:30) wss[i] <- sum(kmeans(podatki, centers=i)$withinss)
+# plot(1:30, wss, type="b", xlab="Number of Clusters",
+#      ylab="Within groups sum of squares")
+# #ali:
+# fviz_nbclust(podatki, kmeans, method = "gap_stat")
+# #ali:
+# library("magrittr")
+# library("NbClust")
+# res.nbclust <- podatki %>%
+#   NbClust(distance = "euclidean",
+#           min.nc = 2, max.nc = 30, 
+#           method = "complete", index ="all")
+# fviz_nbclust(res.nbclust, ggtheme = theme_minimal())
+# 
+# 
+# # Partitioning clustering
+# # Hartigan and Wong algorithm
+# fit <- kmeans(podatki, 30)
+# aggregate(podatki,by=list(fit$cluster),FUN=mean)
+# #isto je fit$centers
+# #podatki <- data.frame(podatki, fit$cluster)
+# library(cluster) 
+# clusplot(podatki, fit$cluster, color=TRUE, shade=TRUE, 
+#          labels=2, lines=0)
+# # Centroid Plot against 1st 2 discriminant functions
+# library(fpc)
+# plotcluster(podatki, fit$cluster)
+# 
+# km.res <- kmeans(podatki, 30, nstart = 25)
+# fviz_cluster(km.res, data = podatki,
+#              ellipse.type = "convex",
+#              palette = "jco",
+#              ggtheme = theme_minimal())
+# 
+# 
+# # Hierarchical Clustering
+# d <- dist(podatki, method = "euclidean")
+# fit <- hclust(d, method="ward.D") 
+# plot(fit)
+# groups <- cutree(fit, k=30)
+# rect.hclust(fit, k=30, border="red")
+# #ali:
+# fviz_dend(fit, k = 30,cex = 0.5, 
+#           k_colors = c("#2E9FDF", "#00AFBB", "#E7B800", "#FC4E07"),
+#           color_labels_by_k = TRUE, rect = TRUE)
+# 
+# 
+# # Ward Hierarchical Clustering with Bootstrapped p values
+# library(pvclust)
+# podatki1 <- data.frame(podatki[,c(1, 4)])
+# fit <- pvclust(podatki, method.hclust="ward.D2",
+#                method.dist="euclidean")
+# plot(fit)
+# pvrect(fit, alpha=.95)
+# 
+# 
+# # Model Based Clustering
+# library(mclust)
+# fit <- Mclust(podatki)
+# plot(fit) # plot results 
+# summary(fit) # display the best model
+# 
+# 
+# # Clustering validation
+# res.hc <- iris[, -5] %>%
+#   scale() %>%
+#   eclust("hclust", k = 3, graph = FALSE)
+# fviz_silhouette(res.hc)
+# 
+# 
+# # Bitcoin
+# fit <- kmeans(podatki, 50)
+# skupine <- data.frame(povprecje = fit$centers[,4], velikost = fit$size)
+# kaj_graf <- btc_1day[1:100,]
+# plot(x = kaj_graf$Timestamp, y = kaj_graf$Close, type = "p")
+# abline(h = skupine$povprecje, col = "red")
+# 
+# 
+# # Drugi primeri
+# 
+# # Fuzzy clustering - en element lahko v večih clustrih
+# library(cluster) # Loads the cluster library.
+# fannyy <- fanny(podatki, k=4, metric = "euclidean", memb.exp = 1.2)
+# round(fannyy$membership, 2)[1:4,]
+# fannyy$clustering 
+# 
+# # Principal component analysis
+# pca <- prcomp(podatki, scale=T)
+# summary(pca)
+# plot(pca$x, pch=20, col="blue", type="n") # To plot dots, drop type="n"
+# text(pca$x, rownames(pca$x), cex=0.8)
+# 
+# # Multidimensional Scaling
+# library(stats)
+# loc <- cmdscale(dist(podatki, method = "euclidean")) 
+# plot(loc[,1], -loc[,2], type="n", xlab="", ylab="", main="cmdscale(podatki)")
+# text(loc[,1], -loc[,2], rownames(loc), cex=0.8) 
+# 
+# 
+# 
+# ## Support and Resistance
+# 
+# detectSupportResistance <- function(timeSeries, tolerance=0.01, nChunks=10, nPoints=3, plotChart=TRUE)
+# {
+#   #detect maximums and minimums
+#   N = length(timeSeries)
+#   stp = floor(N / nChunks)
+#   minz = array(0.0, dim=nChunks)
+#   whichMinz = array(0, dim=nChunks)
+#   maxz = array(0.0, dim=nChunks)
+#   whichMaxz = array(0, dim=nChunks)
+#   for(j in 1:(nChunks-1)) 
+#   {
+#     lft = (j-1)*stp + 1  #left and right elements of each chunk
+#     rght = j*stp
+#     whichMinz[j] = which.min(timeSeries[lft:rght]) + lft
+#     minz[j] = min(timeSeries[lft:rght])
+#     whichMaxz[j] = which.max(timeSeries[lft:rght]) + lft
+#     maxz[j] = max(timeSeries[lft:rght])
+#   }   
+#   #last chunk
+#   lft = j*stp + 1  #left and right elements of each chunk
+#   rght = N
+#   whichMinz[nChunks] = which.min(timeSeries[lft:rght]) + lft
+#   minz[nChunks] = min(timeSeries[lft:rght])
+#   whichMaxz[nChunks] = which.max(timeSeries[lft:rght]) + lft
+#   maxz[nChunks] = max(timeSeries[lft:rght])
+#   
+#   result = list()
+#   result[["minima"]] = NULL
+#   result[["minimaAt"]] = NULL
+#   result[["maxima"]] = NULL
+#   result[["maximaAt"]] = NULL
+#   span = tolerance*(max(maxz) - min(minz))
+#   
+#   rang = order(minz)[1:nPoints]
+#   if((minz[rang[nPoints]] - minz[rang[1]]) <= span)
+#   {
+#     result[["minima"]] = minz[rang[1:nPoints]]
+#     result[["minimaAt"]] = whichMinz[rang[1:nPoints]]
+#   } 
+#   
+#   rang = order(maxz, decreasing = TRUE)[1:nPoints]
+#   if((maxz[rang[1]] - maxz[rang[nPoints]]) <= span)
+#   {
+#     result[["maxima"]] = maxz[rang[1:nPoints]]
+#     result[["maximaAt"]] = whichMaxz[rang[1:nPoints]]
+#   } 
+#   
+#   if(plotChart)
+#   {
+#     ts.plot(timeSeries)
+#     points(whichMinz, minz, col="blue")
+#     points(whichMaxz, maxz, col="red")
+#     if(!is.null(result[["minima"]])  &&  !is.null(result[["minimaAt"]]))
+#       abline(lm(result[["minima"]] ~  result[["minimaAt"]]))
+#     if(!is.null(result[["maxima"]])  &&  !is.null(result[["maximaAt"]]))
+#       abline(lm(result[["maxima"]] ~  result[["maximaAt"]]))
+#   } 
+#   
+#   return(result)    
+# }
+# 
+# # ni dobra funkcija, ker si sam zbereš okvirje na katerih izračuna min in max
+# # torej, če si zbral celotno dolžino timeSeries 100 in okvirjev 10 bo min in max manj kot če si zbral okvirjev 50
+# # support izriše le če so prve tri točke znotraj tolerance in resistance če so zadnje tri točke
+# # za našo analizo bi mogel spremenit funkcijo, da pogleda vsake tri točke
+# detectSupportResistance(timeSeries = btc_1day$Close[100:200], tolerance = 0.03, nChunks = 10, nPoints = 3, plotChart = T)
+# detectSupportResistance(timeSeries = btc_1day$Close[120:200], tolerance = 0.03, nChunks = 10, nPoints = 3, plotChart = T)
 

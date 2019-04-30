@@ -738,7 +738,7 @@ pregled_cagr <- function(tabela, zacetni_kapital = 1000000, strategija){
     cagr <- c(cagr, paste0(cagr(tabela$povprecje[i], zacetni_kapital = zacetni_kapital, obdobje = obdobje[i]), " %"))
     ratio <- c(ratio, tabela$povprecje[i]/tabela$sd[i])
   }
-  pregled <- data.frame("sistem_obdobje" = s_e, "količnik" = ratio, "lsd" = cagr)
+  pregled <- data.frame("sistem_obdobje" = s_e, "kolicnik" = ratio, "lsd" = cagr)
   pregled
 }
 

@@ -71,7 +71,7 @@ vstopni_signali <- function(tabela, toleranca = 0.02, rr = 3, dnevi_N = 20, dnev
 signali_indi <- vstopni_signali(btc_1day_vol)
 cena1 <- odlocitev_cena(signali_indi, "Close")
 signali_indi$izstop <- win_izstop_MA(signali_indi, cena1, rr)
-#signali_indi$izstop <- win_izstop_chandelier(signali_indi, cena1, 22)
+#signali_indi$izstop <- win_izstop_rr(signali_indi, cena1, rr)
 
 dobicki_indi <- function(tabela, obdobje = 1800, zacetni_kapital = 1000000, cena = "Close", 
                          add = 1/2, sl = 2){
@@ -301,7 +301,7 @@ for(i in 1:(nrow(indi_utezi)-2)){
 indi_utezi$entry <- entry
 cena1 <- odlocitev_cena(indi_utezi, "Close")
 indi_utezi$izstop <- win_izstop_MA(indi_utezi, cena1, rr)
-#indi_utezi$izstop <- win_izstop_chandelier(indi_utezi, cena1, 22)
+#indi_utezi$izstop <- win_izstop_rr(indi_utezi, cena1, rr)
 
 indi2_dobicki_btc_360 <- dobicki_indi(indi_utezi, obdobje = 360)
 indi2_dobicki_btc_500 <- dobicki_indi(indi_utezi, obdobje = 500)
@@ -322,6 +322,8 @@ flextabela_pregled(indi2_pregled_btc, 0)
 
 #indi_zelve <- dobicki_indi(indi_utezi, obdobje = 360)
 #indi_zelve <- indi_zelve/1000
+#indi_rr <- dobicki_indi(indi_utezi, obdobje = 360)
+#indi_rr <- indi_rr/1000
 #indi_ch <- dobicki_indi(indi_utezi, obdobje = 360)
 #indi_ch <- indi_ch/1000
 

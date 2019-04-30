@@ -174,23 +174,6 @@ rep_1day <- pretvori_5min(rep_5min, 86400, (60*24))
 save(rep_1day, file = "rep_1day.Rda")
 
 
-#graf
-# library(ggplot2)
-# btc_1day$barva <- ifelse(btc_1day$Open <= btc_1day$Close, "blue", "red")
-# btc_1day$barva <- factor(btc_1day$barva, levels= c("red", "blue"))
-# ggplot(btc_1day[1:360,], aes(Timestamp, fill=barva, colour=barva))+
-#   geom_boxplot(aes(ymin = Low, lower = ifelse(Open < Close, Open, Close), middle = (Open+Close)/2,
-#                    upper = ifelse(Open<Close, Close, Open), ymax = High), stat = "identity")+
-#   theme_minimal()
-
-ggplot(btc_1day, aes(Timestamp))+
-  geom_line(aes(x = Timestamp, y = Close))+
-  theme_minimal()+
-  ylab("Zaključna cena dneva")+
-  xlab("Trgovalni dnevi")+
-  ggtitle("Cena Kriptovalute Bitcoin")
-
-
 
 ###################
 # S & P 500 index #

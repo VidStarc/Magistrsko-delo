@@ -227,8 +227,8 @@ poracuni <- function(tabela, dnevi_N, cena, dnevi_ema1, dnevi_ema2, toleranca, r
   cena1 <- odlocitev_cena(tab, cena)
   tab$izstop <- win_izstop_MA(tab, cena1, rr)
   pomoc <- which(win_izstop_MA(tab, cena1, rr) > 0)
-  #tab$izstop <- win_izstop_chandelier(tab, cena1, 22)
-  #pomoc <- which(win_izstop_chandelier(tab, cena1, 22) > 0)
+  #tab$izstop <- win_izstop_rr(tab, cena1, rr)
+  #pomoc <- which(win_izstop_rr(tab, cena1, rr) > 0)
   tab$izstop[pomoc] <- tab$izstop[pomoc] - 22 + 1   #to velja samo za btc_1day
   tab <- tab[tab$spr_tedenski_N > 0,]
   tab

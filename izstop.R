@@ -1,6 +1,5 @@
 
-
-#iz zmagovite long pozicije izstopimo ko pridemo do 10 dnevnega dna, iz short 10 dnevni vrh
+#iz zmagovite long pozicije izstopimo ko pridemo do 20 dnevnega dna, iz short 20 dnevni vrh
 win_izstop_turtle <- function(tabela, izstop_s2, cena){
   # dna
   dna <- rep(0, nrow(tabela))
@@ -46,7 +45,6 @@ win_izstop_rr <- function(tabela, cena, rr){
   }
   izstop
 }
-
 
 
 # Chandelier exit
@@ -137,7 +135,7 @@ dobicki_vse <- function(tabela, dnevi_N = 20, vstop_s2 = 55, izstop_s2 = 20,
                             obdobje = 1800, zacetni_kapital = 1000000, cena = "Close", add = 1/2, sl = 2, 
                             toleranca = 0.02, rr = 3, dnevi_ema1 = 10, dnevi_ema2 = 50, indikator = "MA", 
                         metoda_izstop = "zelve"){
-  tab1 <- poracuni_vse(tabela, dnevi_N, vstop_s2, izstop_s2, cena, dnevi_ema1, dnevi_ema2, toleranca, rr, 
+  tab <- poracuni_vse(tabela, dnevi_N, vstop_s2, izstop_s2, cena, dnevi_ema1, dnevi_ema2, toleranca, rr, 
                       indikator, metoda_izstop)
   dobicki <- c()
   for(i in 1:(nrow(tab) - obdobje + 1)){
@@ -162,7 +160,8 @@ MA_rr <- dobicki_vse(btc_1day, obdobje = 360, indikator = "MA", metoda_izstop = 
 MA_ch <- dobicki_vse(btc_1day, obdobje = 360, indikator = "MA", metoda_izstop = "chandelier")
 
 indi_zelve <- indi_zelve*1000
-indi_rr <- indi2_dobicki_btc_360*1000
+#indi_rr <- indi2_dobicki_btc_360*1000
+indi_rr <- indi_rr*1000
 indi_ch <- indi_ch*1000
 
 ####################################################################################################
