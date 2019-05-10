@@ -66,7 +66,37 @@ save(btc_1h, file = "databtc_1h.Rda")
 btc_1day <- pretvori(btc_min, 86400, 60*24)
 save(btc_1day, file = "databtc_1day.Rda")
 
+# z volumnom
 btc_1day_vol <- pretvori(btc_min, 86400, 60*24)
+# cleanRepetitions <- function(data) {
+#   start.time <- Sys.time()
+#   res <- data %>%
+#     mutate(
+#       LOpen=lag(Open),
+#       LClose=lag(Close),
+#       LHigh=lag(High),
+#       LLow=lag(Low),
+#       LVolume=lag(Volume)
+#     ) %>% 
+#     mutate(
+#       repeated = (Open == LOpen) & (Close == LClose) & (High == LHigh) & 
+#         (Low == LLow) & (Volume == LVolume)
+#     ) %>% 
+#     mutate(
+#       repeated = ifelse(is.na(repeated), FALSE, repeated)
+#     ) %>%
+#     mutate(
+#       Volume = ifelse(repeated, 0 , Volume)
+#     ) %>% 
+#     select(
+#       Timestamp, Open, High, Low, Close, Volume
+#     )
+#   print(sprintf("cleanRepetitions duration: %ss", Sys.time() - start.time))
+#   res
+# }
+# proba <- cleanRepetitions(btc_1day_vol)
+
+
 
 ##########
 #ETHEREUM#

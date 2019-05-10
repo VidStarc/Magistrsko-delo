@@ -7,7 +7,7 @@ library(officer)
 library(plyr)
 library(Ckmeans.1d.dp)
 library(rpatrec)
-library(TRR)
+library(TTR)
 library(tictoc)
 
 
@@ -1239,7 +1239,8 @@ poracuni <- function(tabela, dnevi_N, vstop_s1, vstop_s2, izstop_s1_s2, cena, dn
 
 
 
-trgovanje <- function(tabela, zacetni_kapital, cena, add, sl, indikator){
+trgovanje <- function(tabela, zacetni_kapital, cena, add, sl, indikator, spr){
+  i_izstop <- spr
   kandidati <- which(tabela$entry == 1 | tabela$entry == 2)
   if(indikator == "zelve_s1"){
     kandidati_s2 <- which(tabela$entry_s2 == 1 | tabela$entry_s2 == 2)
@@ -1413,7 +1414,7 @@ dobicki_trgovanje <- function(tabela, dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55
     tmp <- tab[i:(obdobje + i - 1),]
     cena2 <- odlocitev_cena(tmp, cena)
     i_izstop <- (i-1)
-    dobicki <- c(dobicki, trgovanje(tmp, zacetni_kapital, cena2, add, sl, indikator))
+    dobicki <- c(dobicki, trgovanje(tmp, zacetni_kapital, cena2, add, sl, indikator, i_izstop))
   }
   dobicki
 }
@@ -1424,6 +1425,7 @@ dobicki_trgovanje <- function(tabela, dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55
 ###############################
 
 #1 day
+btc_360_S1_proba <- dobicki_trgovanje(btc_1day, obdobje = 360)
 btc_360_S1 <- dobicki_trgovanje(btc_1day, obdobje = 360)
 btc_500_S1 <- dobicki_trgovanje(btc_1day, obdobje = 500)
 btc_1000_S1 <- dobicki_trgovanje(btc_1day, obdobje = 1000)
@@ -1454,33 +1456,30 @@ btc_1h_500_S1 <- dobicki_trgovanje(btc_1h, obdobje = 500)
 btc_1h_1000_S1 <- dobicki_trgovanje(btc_1h, obdobje = 1000)
 btc_1h_1800_S1 <- dobicki_trgovanje(btc_1h, obdobje = 1800)
 
+
 btc_1h_360_S2 <- dobicki_trgovanje(btc_1h, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 360)
 btc_1h_500_S2 <- dobicki_trgovanje(btc_1h, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 500)
 btc_1h_1000_S2 <- dobicki_trgovanje(btc_1h, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 1000)
 btc_1h_1800_S2 <- dobicki_trgovanje(btc_1h, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 1800)
 
+
 #5min
 btc_5min_360_S1 <- dobicki_trgovanje(btc_5min, obdobje = 360)
 btc_5min_500_S1 <- dobicki_trgovanje(btc_5min, obdobje = 500)
-btc_5min_1000_S1 <- dobicki_trgovanje(btc_5min, obdobje = 1000)
 #nism še:
+btc_5min_1000_S1 <- dobicki_trgovanje(btc_5min, obdobje = 1000)
 btc_5min_1800_S1 <- dobicki_trgovanje(btc_5min, obdobje = 1800)
 
 btc_5min_360_S2 <- dobicki_trgovanje(btc_5min, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 360)
 btc_5min_500_S2 <- dobicki_trgovanje(btc_5min, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 500)
-btc_5min_1000_S2 <- dobicki_trgovanje(btc_5min, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 1000)
 #nism še:
+btc_5min_1000_S2 <- dobicki_trgovanje(btc_5min, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 1000)
 btc_5min_1800_S2 <- dobicki_trgovanje(btc_5min, izstop_s1_s2 = 20, indikator = "zelve_s2", obdobje = 1800)
 
 
 ###############################
 # DOBIČKI - Podpore in odpori #
 ###############################
-
-#(tabela, dnevi_N = 20, vstop_s1 = 20, vstop_s2 = 55, izstop_s1_s2 = 10, 
-# obdobje, zacetni_kapital = 1000000, cena = "Close", add = 1/2, 
-# sl = 2, toleranca = 0.02, rr = 3, dnevi_ema1 = 10,
-# dnevi_ema2 = 50, indikator = "zelve_s1", metoda_izstop = "zelve")
 
 # Z lokalnimi ekstremi
 SinR_btc_360 <- dobicki_trgovanje(btc_1day, obdobje = 360, indikator = "SinR", metoda_izstop = "SinR")
@@ -1576,7 +1575,7 @@ dobicki_indi <- function(tabela, obdobje = 1800, zacetni_kapital = 1000000, cena
     tmp <- tab[i:(obdobje + i - 1),]
     cena2 <- odlocitev_cena(tmp, cena)
     i_izstop <- (i-1)
-    dobicki <- c(dobicki, trgovanje(tmp, zacetni_kapital, cena2, add, sl, indikator))
+    dobicki <- c(dobicki, trgovanje(tmp, zacetni_kapital, cena2, add, sl, indikator, i_izstop))
   }
   dobicki
 }

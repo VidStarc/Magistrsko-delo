@@ -11,7 +11,7 @@ opt_dobicki <- function(tabela = btc_1day, dnevi_N = 20, vstop_s1 = 20, vstop_s2
     tmp <- tab[i:(obdobje + i - 1),]
     cena2 <- odlocitev_cena(tmp, cena)
     i_izstop <- (i-1)
-    dobicki <- c(dobicki, trgovanje(tmp, zacetni_kapital, cena2, add, sl, indikator))
+    dobicki <- c(dobicki, trgovanje(tmp, zacetni_kapital, cena2, add, sl, indikator, i_izstop))
   }
   c(mean(dobicki), sd(dobicki))
 }
@@ -151,23 +151,23 @@ colnames(S2sd_add_sl) <- c(1, 2, 3, 4)
 #####
 # Najboljši parametri - nova strategija
 
-novi_btc_360_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 12, 
-                                     obdobje = 360, cena = "Low", add = 0.25, sl = 4)
-novi_btc_500_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 12, 
-                                     obdobje = 500, cena = "Low", add = 0.25, sl = 4)
-novi_btc_1000_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 12, 
-                                      obdobje = 1000, cena = "Low", add = 0.25, sl = 4)
-novi_btc_1800_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 12, 
-                                      obdobje = 1800, cena = "Low", add = 0.25, sl = 4)
+novi_btc_360_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 10, 
+                                     obdobje = 360, cena = "High", add = 0.25, sl = 4)
+novi_btc_500_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 10, 
+                                     obdobje = 500, cena = "High", add = 0.25, sl = 4)
+novi_btc_1000_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 10, 
+                                      obdobje = 1000, cena = "High", add = 0.25, sl = 4)
+novi_btc_1800_S1 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 10, 
+                                      obdobje = 1800, cena = "High", add = 0.25, sl = 4)
 
-novi_btc_360_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 24, 
-                                     obdobje = 360, cena = "Low", add = 0.25, sl = 1, indikator = "zelve_s2")
-novi_btc_500_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 24, 
-                                     obdobje = 500, cena = "Low", add = 0.25, sl = 1, indikator = "zelve_s2")
-novi_btc_1000_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 24, 
-                                      obdobje = 1000, cena = "Low", add = 0.25, sl = 1, indikator = "zelve_s2")
-novi_btc_1800_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 30, vstop_s2 = 60, izstop_s1_s2 = 24, 
-                                      obdobje = 1800, cena = "Low", add = 0.25, sl = 1, indikator = "zelve_s2")
+novi_btc_360_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 24, 
+                                     obdobje = 360, cena = "High", add = 0.25, sl = 4, indikator = "zelve_s2")
+novi_btc_500_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 24, 
+                                     obdobje = 500, cena = "High", add = 0.25, sl = 4, indikator = "zelve_s2")
+novi_btc_1000_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 24, 
+                                      obdobje = 1000, cena = "High", add = 0.25, sl = 4, indikator = "zelve_s2")
+novi_btc_1800_S2 <- dobicki_trgovanje(btc_1day, dnevi_N = 10, vstop_s1 = 10, vstop_s2 = 50, izstop_s1_s2 = 24, 
+                                      obdobje = 1800, cena = "High", add = 0.25, sl = 4, indikator = "zelve_s2")
 
 
 

@@ -254,7 +254,7 @@ trgovanje <- function(tabela, zacetni_kapital, cena, add, sl){
   }}
 
 
-
+# nova funkcija za omejitev količine sredstevna 1000000
 trgovanje <- function(tabela, zacetni_kapital, cena, add, sl, indikator){
   kandidati <- which(tabela$entry == 1 | tabela$entry == 2)
   if(indikator == "zelve_s1"){
